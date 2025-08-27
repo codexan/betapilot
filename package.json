@@ -2,6 +2,7 @@
     "name": "betapilot",
     "version": "0.1.0",
     "private": true,
+    
     "rocketCritical": {
         "dependencies": [
             "@dhiwise/component-tagger",
@@ -59,7 +60,8 @@
     "scripts": {
         "start": "vite",
         "build": "vite build --sourcemap",
-        "serve": "vite preview"
+        "serve": "vite preview",
+        "test:customer": "node src/services/tests/testAddCustomer.js"
     },
     "eslintConfig": {
         "extends": [
