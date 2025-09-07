@@ -22,7 +22,7 @@ const Routes = () => {
         <ScrollToTop />
         <RouterRoutes>
           {/* Define your route here */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/customer-profile" element={<CustomerProfile />} />
           <Route path="/login" element={<Login />} />
           <Route path="/customer-directory" element={<CustomerDirectory />} />

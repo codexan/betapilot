@@ -676,7 +676,8 @@ const CampaignCreationWizard = () => {
                   <Button
                     variant="outline"
                     onClick={() => handleSendNow(steps?.[currentStep]?.id)}
-                    disabled={loading}
+                    // disabled={loading}
+                    disabled
                     className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20"
                     iconName="Send"
                     iconPosition="left"

@@ -120,13 +120,13 @@ const CalendarIntegrationHub = () => {
                   <Plus className="w-5 h-5 mr-2" />
                   Add Time Slots
                 </Button>
-                <Button
+                <Button 
                   onClick={() => setActiveTab('invitations')}
                   variant="outline"
                   className="flex items-center justify-center p-4"
                 >
                   <Mail className="w-5 h-5 mr-2" />
-                  Send Invitation
+                  Send Invitation (coming soon)
                 </Button>
               </div>
             </div>

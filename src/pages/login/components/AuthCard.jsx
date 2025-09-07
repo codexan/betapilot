@@ -101,7 +101,7 @@ const AuthCard = () => {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Icon name="UserCheck" size={32} className="text-primary" />
           </div>
-          <h2 className="text-2xl font-semibold text-foreground mb-2">Welcome Back</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-2">Welcome!</h2>
           <p className="text-muted-foreground">
             Sign in to your BetaPilot account to manage your beta testing campaigns
           </p>
@@ -135,6 +135,16 @@ const AuthCard = () => {
 
         {/* Auth Mode Toggle */}
         <div className="flex rounded-lg bg-muted p-1 mb-6">
+          
+          {/* <button
+            onClick={() => setAuthMode('credentials')}
+            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+              authMode === 'credentials' ?'bg-background text-foreground shadow-sm' :'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Email Login
+          </button> */}
+
           <button
             onClick={() => setAuthMode('oauth')}
             className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
@@ -142,14 +152,6 @@ const AuthCard = () => {
             }`}
           >
             SSO Login
-          </button>
-          <button
-            onClick={() => setAuthMode('credentials')}
-            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
-              authMode === 'credentials' ?'bg-background text-foreground shadow-sm' :'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Email Login
           </button>
         </div>
 

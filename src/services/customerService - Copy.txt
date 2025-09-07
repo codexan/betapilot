@@ -125,17 +125,6 @@ export const createCustomer = async (customerData) => {
       throw new Error('First name, last name, and email are required fields');
     }
 
-    //check existing customer
-    const { data: existingCustomer } = await supabase
-      ?.from('customers')
-      ?.select('id')
-      ?.ilike('email', `%${customerData?.email}%`)
-      ?.maybeSingle();
-    if (existingCustomer) {
-      console.warn('Customer already exists:', existingCustomer.id);
-      throw new Error('Customer with this email already exists');
-      return existingCustomer;
-    }
     // Handle organization - either find existing or create new
     let organizationId = null;
     if (customerData?.organization) {
@@ -144,7 +133,7 @@ export const createCustomer = async (customerData) => {
         ?.from('organizations')
         ?.select('id')
         ?.ilike('name', `%${customerData?.organization}%`)
-        ?.maybeSingle();
+        ?.single();
 
       console.log('existingOrg', existingOrg);
       
@@ -193,8 +182,7 @@ export const createCustomer = async (customerData) => {
     // Create customer
     const { data, error } = await supabase
       ?.from('customers')
-      // ?.insert([customerInsertData])
-      .upsert([customerInsertData], { onConflict: 'email' })
+      ?.insert([customerInsertData])
       ?.select(`
         *,
         organization:organizations (
