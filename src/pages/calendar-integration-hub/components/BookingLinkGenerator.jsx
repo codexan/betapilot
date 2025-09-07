@@ -1,0 +1,334 @@
+import React, { useState } from 'react';
+import { Copy, ExternalLink, Settings, QrCode } from 'lucide-react';
+import Button from '../../../components/ui/Button';
+import Input from '../../../components/ui/Input';
+
+const BookingLinkGenerator = ({ calendarSlots = [], calendarIntegrations = [] }) => {
+  const [selectedProgram, setSelectedProgram] = useState('');
+  const [customization, setCustomization] = useState({
+    brandingLogo: '',
+    brandingColors: {
+      primary: '#3B82F6',
+      secondary: '#1E40AF'
+    },
+    customMessage: '',
+    includeCompanyInfo: true,
+    timeZone: 'America/New_York',
+    bookingDuration: '60',
+    bufferTime: '15'
+  });
+  
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  // Mock beta programs - in real app, this would come from props or service
+  const betaPrograms = [
+    { id: '1', name: 'BetaPilot v2.0 Beta Program' },
+    { id: '2', name: 'Mobile App Beta' },
+    { id: '3', name: 'Website Redesign Beta' }
+  ];
+
+  const generateBookingLink = () => {
+    if (!selectedProgram) {
+      alert('Please select a beta program');
+      return;
+    }
+
+    const params = new URLSearchParams({
+      program: selectedProgram,
+      branding: customization.brandingColors.primary,
+      timezone: customization.timeZone,
+      duration: customization.bookingDuration,
+      buffer: customization.bufferTime
+    });
+
+    const baseUrl = window.location?.origin;
+    const bookingUrl = `${baseUrl}/booking/${selectedProgram}?${params?.toString()}`;
+    
+    setGeneratedLink(bookingUrl);
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard?.writeText(generatedLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
+  };
+
+  const handleCustomizationChange = (field, value) => {
+    if (field?.includes('.')) {
+      const [parent, child] = field?.split('.');
+      setCustomization(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev?.[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      setCustomization(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
+
+  const availableSlots = calendarSlots?.filter(slot => 
+    slot?.status === 'available' && 
+    slot?.beta_program_id === selectedProgram
+  ) || [];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Booking Link Generator</h2>
+        <p className="text-gray-600">Create customizable booking links for beta testers to schedule their sessions.</p>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Configuration Panel */}
+        <div className="space-y-6">
+          {/* Program Selection */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-4">Select Beta Program</h3>
+            <div className="space-y-3">
+              {betaPrograms?.map(program => (
+                <label key={program?.id} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="radio"
+                    name="program"
+                    value={program?.id}
+                    checked={selectedProgram === program?.id}
+                    onChange={(e) => setSelectedProgram(e?.target?.value)}
+                    className="mr-3"
+                  />
+                  <div>
+                    <p className="font-medium">{program?.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {availableSlots?.length} available slots
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Branding Customization */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <Settings className="w-5 h-5 mr-2" />
+              Branding & Customization
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Primary Color
+                </label>
+                <Input
+                  type="color"
+                  value={customization?.brandingColors?.primary}
+                  onChange={(e) => handleCustomizationChange('brandingColors.primary', e?.target?.value)}
+                  className="h-10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Custom Welcome Message
+                </label>
+                <textarea
+                  value={customization?.customMessage}
+                  onChange={(e) => handleCustomizationChange('customMessage', e?.target?.value)}
+                  placeholder="Welcome to our beta testing program..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Time Zone
+                </label>
+                <select
+                  value={customization?.timeZone}
+                  onChange={(e) => handleCustomizationChange('timeZone', e?.target?.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="America/New_York">Eastern Time (ET)</option>
+                  <option value="America/Chicago">Central Time (CT)</option>
+                  <option value="America/Denver">Mountain Time (MT)</option>
+                  <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                  <option value="UTC">UTC</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Session Duration (minutes)
+                  </label>
+                  <Input
+                    type="number"
+                    value={customization?.bookingDuration}
+                    onChange={(e) => handleCustomizationChange('bookingDuration', e?.target?.value)}
+                    min="15"
+                    max="180"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Buffer Time (minutes)
+                  </label>
+                  <Input
+                    type="number"
+                    value={customization?.bufferTime}
+                    onChange={(e) => handleCustomizationChange('bufferTime', e?.target?.value)}
+                    min="0"
+                    max="60"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="includeCompanyInfo"
+                  checked={customization?.includeCompanyInfo}
+                  onChange={(e) => handleCustomizationChange('includeCompanyInfo', e?.target?.checked)}
+                  className="mr-2"
+                />
+                <label htmlFor="includeCompanyInfo" className="text-sm text-gray-700">
+                  Include company information in booking page
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Preview & Generation Panel */}
+        <div className="space-y-6">
+          {/* Link Generation */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-4">Generate Booking Link</h3>
+            
+            <Button
+              onClick={generateBookingLink}
+              disabled={!selectedProgram}
+              className="w-full mb-4"
+            >
+              Generate Booking Link
+            </Button>
+
+            {generatedLink && (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={generatedLink}
+                    readOnly
+                    className="flex-1"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={copyToClipboard}
+                    className="flex items-center"
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    {copied ? 'Copied!' : 'Copy'}
+                  </Button>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(generatedLink, '_blank')}
+                    className="flex items-center"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    Preview
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      // Generate QR code
+                      console.log('Generate QR code for:', generatedLink);
+                    }}
+                    className="flex items-center"
+                  >
+                    <QrCode className="w-4 h-4 mr-1" />
+                    QR Code
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Preview */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-4">Booking Page Preview</h3>
+            
+            <div 
+              className="border rounded-lg p-6 bg-gray-50 min-h-64"
+              style={{
+                borderColor: customization?.brandingColors?.primary,
+                borderWidth: '2px'
+              }}
+            >
+              <div className="text-center">
+                <div 
+                  className="w-16 h-16 rounded-full mx-auto mb-4"
+                  style={{ backgroundColor: customization?.brandingColors?.primary }}
+                ></div>
+                
+                <h4 className="text-xl font-semibold mb-2">
+                  {betaPrograms?.find(p => p?.id === selectedProgram)?.name || 'Beta Program'}
+                </h4>
+                
+                {customization?.customMessage && (
+                  <p className="text-gray-600 mb-4">{customization?.customMessage}</p>
+                )}
+                
+                <div className="space-y-2 text-sm text-gray-500">
+                  <p>Duration: {customization?.bookingDuration} minutes</p>
+                  <p>Time Zone: {customization?.timeZone?.replace('_', ' ')}</p>
+                  <p>Available slots: {availableSlots?.length}</p>
+                </div>
+
+                {customization?.includeCompanyInfo && (
+                  <div className="mt-4 pt-4 border-t text-xs text-gray-400">
+                    <p>Powered by BetaPilot</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Link Analytics (Future Feature) */}
+          <div className="bg-white rounded-lg shadow p-6 opacity-50">
+            <h3 className="text-lg font-semibold mb-4">Link Analytics</h3>
+            <p className="text-gray-500 text-sm">
+              Analytics for booking link usage will be available here.
+            </p>
+            <div className="mt-4 space-y-2 text-sm text-gray-400">
+              <div className="flex justify-between">
+                <span>Total clicks:</span>
+                <span>Coming soon</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Conversions:</span>
+                <span>Coming soon</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BookingLinkGenerator;

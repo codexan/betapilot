@@ -5,7 +5,7 @@ import Breadcrumb from '../../components/ui/Breadcrumb';
 import MetricCard from './components/MetricCard';
 import ActivityFeed from './components/ActivityFeed';
 import QuickActions from './components/QuickActions';
-import WelcomeHeader from './components/WelcomeHeader';
+import HeroSection from './components/HeroSection';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -51,7 +51,8 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <Breadcrumb />
           
-          <WelcomeHeader />
+          {/* Hero Section - New clean, modern section above metrics */}
+          <HeroSection />
 
           {/* Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

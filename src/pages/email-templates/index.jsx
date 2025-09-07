@@ -7,157 +7,198 @@ import TemplateActions from './components/TemplateActions';
 import TemplateVersionHistory from './components/TemplateVersionHistory';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
+import { useAuth } from '../../contexts/AuthContext';
+import * as emailTemplateService from '../../services/emailTemplateService';
 
 const EmailTemplates = () => {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState('');
 
-  // Mock templates data
-  const mockTemplates = [
-    {
-      id: 'tpl_001',
-      name: 'Beta Invitation - Mobile App',
-      subject: 'You\'re invited to test our new mobile app!',
-      category: 'invitation',
-      content: `Dear {{FirstName}},\n\nWe're excited to invite you to participate in the beta testing of our revolutionary mobile application, {{BetaName}}.\n\nAs a valued member of {{CompanyName}}, your feedback will be instrumental in shaping the final product.\n\n<strong>What you'll be testing:</strong>\n• New user interface design\n• Enhanced performance features\n• Advanced security protocols\n\n<strong>Next Steps:</strong>\n1. Click the link below to book your testing slot\n2. Complete the setup process\n3. Start testing and provide feedback\n\n<a href="{{SlotLink}}">Book Your Testing Slot</a>\n\nPlease note that this beta access expires on {{ExpiryDate}}.\n\nThank you for helping us build something amazing!\n\nBest regards,\nThe Product Team`,
-      lastModified: '2 hours ago',
-      usageCount: 45,
-      createdAt: '2024-08-20',
-      author: 'John Doe'
-    },
-    {
-      id: 'tpl_002',
-      name: 'Testing Reminder - Web Platform',
-      subject: 'Reminder: Your beta testing slot expires soon',
-      category: 'reminder',
-      content: `Hi {{FirstName}},\n\nThis is a friendly reminder that your beta testing access for {{BetaName}} will expire in 3 days.\n\nIf you haven't started testing yet, please use the link below:\n{{SlotLink}}\n\nWe'd love to hear your feedback before the testing period ends on {{ExpiryDate}}.\n\nQuestions? Reply to this email and we'll help you out.\n\nThanks,\nBeta Testing Team`,
-      lastModified: '1 day ago',usageCount: 23,createdAt: '2024-08-18',author: 'Jane Smith'
-    },
-    {
-      id: 'tpl_003',name: 'Feedback Request - API Testing',subject: 'How was your {{BetaName}} testing experience?',category: 'feedback',
-      content: `Hello {{FirstName}},\n\nThank you for participating in the {{BetaName}} beta testing program!\n\nYour testing session has concluded, and we'd love to hear about your experience.\n\n<strong>Please share your thoughts on:</strong>\n• Overall user experience\n• Performance and reliability\n• Feature completeness\n• Any bugs or issues encountered\n\n<a href="{{SlotLink}}">Submit Your Feedback</a>\n\nYour insights are invaluable in helping us improve the product before launch.\n\nAs a token of appreciation, you'll receive early access to the final release.\n\nThank you for your time and contribution!\n\nWarm regards,\nProduct Management Team`,
-      lastModified: '3 days ago',usageCount: 67,createdAt: '2024-08-15',author: 'Mike Johnson'
-    },
-    {
-      id: 'tpl_004',name: 'Beta Completion Certificate',subject: 'Congratulations! You\'ve completed {{BetaName}} beta testing',
-      category: 'completion',
-      content: `Congratulations {{FirstName}}!\n\nYou have successfully completed the beta testing program for {{BetaName}}.\n\n<strong>Your Contribution:</strong>\n• Testing duration: 2 weeks\n• Feedback submissions: 5\n• Bugs reported: 3\n• Feature suggestions: 2\n\nYour valuable feedback has directly contributed to improving the product quality.\n\n<strong>What's Next:</strong>\n• You'll receive early access to the production release\n• Exclusive beta tester badge on your profile\n• Priority consideration for future beta programs\n\nThank you for being an essential part of our development process!\n\nBest wishes,\nThe {{CompanyName}} Team`,
-      lastModified: '5 days ago',
-      usageCount: 12,
-      createdAt: '2024-08-10',
-      author: 'Sarah Wilson'
-    }
-  ];
-
+  // Load templates from Supabase
   useEffect(() => {
-    // Simulate loading templates
+    let isMounted = true;
+
     const loadTemplates = async () => {
-      setIsLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setTemplates(mockTemplates);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        setError('');
+        
+        const { data, error: fetchError } = await emailTemplateService?.getEmailTemplates();
+        
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        if (isMounted) {
+          setTemplates(data || []);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(`Failed to load templates: ${err?.message || 'Unknown error'}`);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
     };
 
     loadTemplates();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleSelectTemplate = (template) => {
     setSelectedTemplate(template);
+    setError('');
   };
 
   const handleCreateNew = () => {
     setSelectedTemplate(null);
+    setError('');
   };
 
   const handleSaveTemplate = async (templateData) => {
-    // Simulate save operation
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    if (selectedTemplate) {
-      // Update existing template
-      const updatedTemplates = templates?.map(t => 
-        t?.id === selectedTemplate?.id 
-          ? { ...t, ...templateData, lastModified: 'Just now' }
-          : t
-      );
-      setTemplates(updatedTemplates);
-      setSelectedTemplate({ ...selectedTemplate, ...templateData });
-      setShowSuccessMessage('Template updated successfully!');
-    } else {
-      // Create new template
-      const newTemplate = {
-        id: `tpl_${Date.now()}`,
-        ...templateData,
-        lastModified: 'Just now',
-        usageCount: 0,
-        createdAt: new Date()?.toISOString()?.split('T')?.[0],
-        author: 'John Doe'
-      };
-      setTemplates([newTemplate, ...templates]);
-      setSelectedTemplate(newTemplate);
-      setShowSuccessMessage('Template created successfully!');
-    }
+    try {
+      setError('');
+      let result;
 
-    // Hide success message after 3 seconds
-    setTimeout(() => setShowSuccessMessage(''), 3000);
+      if (selectedTemplate?.id) {
+        // Update existing template
+        result = await emailTemplateService?.updateEmailTemplate(selectedTemplate?.id, templateData);
+      } else {
+        // Create new template
+        result = await emailTemplateService?.createEmailTemplate(templateData);
+      }
+
+      if (result?.error) {
+        throw result?.error;
+      }
+
+      // Update templates list
+      const { data: refreshedTemplates } = await emailTemplateService?.getEmailTemplates();
+      setTemplates(refreshedTemplates || []);
+
+      // Update selected template
+      if (result?.data) {
+        setSelectedTemplate(result?.data);
+      }
+
+      setShowSuccessMessage(
+        selectedTemplate?.id ? 'Template updated successfully!' : 'Template created successfully!'
+      );
+      
+      setTimeout(() => setShowSuccessMessage(''), 3000);
+    } catch (err) {
+      setError(`Failed to save template: ${err?.message || 'Unknown error'}`);
+    }
   };
 
   const handleSendTest = async (template, testEmail) => {
-    // Simulate sending test email
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setShowSuccessMessage(`Test email sent to ${testEmail}!`);
-    setTimeout(() => setShowSuccessMessage(''), 3000);
+    try {
+      setError('');
+      const { error: sendError } = await emailTemplateService?.sendTestEmail(template, testEmail);
+      
+      if (sendError) {
+        throw sendError;
+      }
+
+      setShowSuccessMessage(`Test email sent to ${testEmail}!`);
+      setTimeout(() => setShowSuccessMessage(''), 3000);
+    } catch (err) {
+      setError(`Failed to send test email: ${err?.message || 'Unknown error'}`);
+    }
   };
 
-  const handleDuplicateTemplate = (template) => {
-    const duplicatedTemplate = {
-      ...template,
-      id: `tpl_${Date.now()}`,
-      name: `${template?.name} (Copy)`,
-      lastModified: 'Just now',
-      usageCount: 0,
-      createdAt: new Date()?.toISOString()?.split('T')?.[0]
-    };
-    setTemplates([duplicatedTemplate, ...templates]);
-    setSelectedTemplate(duplicatedTemplate);
-    setShowSuccessMessage('Template duplicated successfully!');
-    setTimeout(() => setShowSuccessMessage(''), 3000);
+  const handleDuplicateTemplate = async (template) => {
+    try {
+      setError('');
+      const { data, error: duplicateError } = await emailTemplateService?.duplicateEmailTemplate(template?.id);
+      
+      if (duplicateError) {
+        throw duplicateError;
+      }
+
+      // Refresh templates list
+      const { data: refreshedTemplates } = await emailTemplateService?.getEmailTemplates();
+      setTemplates(refreshedTemplates || []);
+
+      // Select the duplicated template
+      if (data) {
+        setSelectedTemplate(data);
+      }
+
+      setShowSuccessMessage('Template duplicated successfully!');
+      setTimeout(() => setShowSuccessMessage(''), 3000);
+    } catch (err) {
+      setError(`Failed to duplicate template: ${err?.message || 'Unknown error'}`);
+    }
   };
 
   const handleDeleteTemplate = async (template) => {
-    // Simulate delete operation
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const updatedTemplates = templates?.filter(t => t?.id !== template?.id);
-    setTemplates(updatedTemplates);
-    
-    if (selectedTemplate?.id === template?.id) {
-      setSelectedTemplate(null);
+    try {
+      setError('');
+      const { error: deleteError } = await emailTemplateService?.deleteEmailTemplate(template?.id);
+      
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      // Update templates list
+      const updatedTemplates = templates?.filter(t => t?.id !== template?.id);
+      setTemplates(updatedTemplates);
+      
+      // Clear selected template if it was deleted
+      if (selectedTemplate?.id === template?.id) {
+        setSelectedTemplate(null);
+      }
+      
+      setShowSuccessMessage('Template deleted successfully!');
+      setTimeout(() => setShowSuccessMessage(''), 3000);
+    } catch (err) {
+      setError(`Failed to delete template: ${err?.message || 'Unknown error'}`);
     }
-    
-    setShowSuccessMessage('Template deleted successfully!');
-    setTimeout(() => setShowSuccessMessage(''), 3000);
   };
 
-  const handleRestoreVersion = (version) => {
-    if (selectedTemplate) {
-      const restoredTemplate = {
-        ...selectedTemplate,
-        content: version?.content,
-        lastModified: 'Just now'
-      };
-      
-      const updatedTemplates = templates?.map(t => 
-        t?.id === selectedTemplate?.id ? restoredTemplate : t
+  const handleRestoreVersion = async (version) => {
+    if (!selectedTemplate?.id) return;
+
+    try {
+      setError('');
+      const { data, error: updateError } = await emailTemplateService?.updateEmailTemplate(
+        selectedTemplate?.id,
+        {
+          name: version?.name,
+          subject: version?.subject,
+          content: version?.content,
+          variables: version?.variables,
+          category: selectedTemplate?.category,
+          is_active: selectedTemplate?.is_active
+        }
       );
       
-      setTemplates(updatedTemplates);
-      setSelectedTemplate(restoredTemplate);
-      setShowSuccessMessage(`Restored to version ${version?.version}!`);
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update templates list and selected template
+      const { data: refreshedTemplates } = await emailTemplateService?.getEmailTemplates();
+      setTemplates(refreshedTemplates || []);
+      
+      if (data) {
+        setSelectedTemplate(data);
+      }
+
+      setShowSuccessMessage(`Restored to version ${version?.version_number}!`);
       setTimeout(() => setShowSuccessMessage(''), 3000);
+    } catch (err) {
+      setError(`Failed to restore version: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -184,6 +225,14 @@ const EmailTemplates = () => {
         <div className="px-6 py-4">
           <Breadcrumb />
           
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center space-x-2">
+              <Icon name="AlertTriangle" size={16} className="text-destructive" />
+              <span className="text-sm text-destructive font-medium">{error}</span>
+            </div>
+          )}
+
           {/* Success Message */}
           {showSuccessMessage && (
             <div className="mb-4 p-3 bg-success/10 border border-success/20 rounded-lg flex items-center space-x-2">

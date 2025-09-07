@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase.js';
+import { supabase } from '../lib/supabase';
 
 // GET: Fetch all customers with organization and segments data
 export const getCustomers = async () => {
@@ -105,86 +105,37 @@ export const createCustomer = async (customerData) => {
     }
 
     // Validate required fields before processing
-    console.log('Testing The customerData:', customerData);
     if (!customerData?.firstName?.trim() || !customerData?.lastName?.trim() || !customerData?.email?.trim()) {
       throw new Error('First name, last name, and email are required fields');
     }
 
     // Handle organization - either find existing or create new
-    // let organizationId = null;
-    // if (customerData?.organization) {
-    //   // Check if organization exists
-    //   // const { data: existingOrg } = await supabase
-    //   //   ?.from('organizations')
-    //   //   ?.select('id')
-    //   //   ?.ilike('name', customerData?.organization)
-    //   //   ?.single();
-
-    //     const { data: existingOrg } = await supabase
-    //     .from('organizations')
-    //     .select('id')
-    //     .eq('name', customerData?.organization)
-    //     .single();
-      
-
-    //   if (existingOrg) {
-    //     organizationId = existingOrg?.id;
-    //   } else {
-    //     // Create new organization
-    //     const { data: newOrg, error: orgError } = await supabase
-    //       ?.from('organizations')
-    //       ?.insert([{
-    //         name: customerData?.organization,
-    //         industry: customerData?.industry || null
-    //       }])
-    //       ?.select()
-    //       ?.single();
-
-    //     if (orgError) throw orgError;
-    //     organizationId = newOrg?.id;
-    //   }
-    // }
     let organizationId = null;
-
     if (customerData?.organization) {
-      try {
-        const { data: existingOrg, error: orgLookupError } = await supabase
-          .from('organizations')
-          .select('id')
-          // .ilike('name', customerData.organization)
-          .ilike('name', `%${customerData.organization}%`)
-          .maybeSingle();
+      // Check if organization exists
+      const { data: existingOrg } = await supabase
+        ?.from('organizations')
+        ?.select('id')
+        ?.ilike('name', customerData?.organization)
+        ?.single();
 
-        if (orgLookupError) {
-          console.error('❌ Error fetching organization:', orgLookupError);
-          throw orgLookupError;
-        }
+      if (existingOrg) {
+        organizationId = existingOrg?.id;
+      } else {
+        // Create new organization
+        const { data: newOrg, error: orgError } = await supabase
+          ?.from('organizations')
+          ?.insert([{
+            name: customerData?.organization,
+            industry: customerData?.industry || null
+          }])
+          ?.select()
+          ?.single();
 
-        if (existingOrg) {
-          organizationId = existingOrg.id;
-        } else {
-          const { data: newOrg, error: orgInsertError } = await supabase
-            .from('organizations')
-            .insert([{
-              name: customerData.organization,
-              industry: customerData.industry || null
-            }])
-            .select()
-            .single();
-
-          if (orgInsertError) {
-            console.error('❌ Error inserting organization:', orgInsertError);
-            throw orgInsertError;
-          }
-
-          organizationId = newOrg.id;
-        }
-      } catch (err) {
-        console.error('❌ Network or Supabase error:', err.message || err);
-        throw err;
+        if (orgError) throw orgError;
+        organizationId = newOrg?.id;
       }
     }
-
 
     // Prepare customer data with proper null handling
     const customerInsertData = {
@@ -344,3 +295,10 @@ export const getCustomerStats = async () => {
     return { data: null, error: error?.message };
   }
 }
+function customerService(...args) {
+  // eslint-disable-next-line no-console
+  console.warn('Placeholder: customerService is not implemented yet.', args);
+  return null;
+}
+
+export default customerService;
