@@ -55,12 +55,13 @@ const HeroSection = () => {
           </Button>
           
           <button
-            onClick={handleViewCampaigns}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-lg transition-colors duration-200 flex items-center"
+            disabled
+            className="text-gray-400 dark:text-gray-500 cursor-not-allowed font-medium text-lg transition-colors duration-200 flex items-center"
           >
             View Existing Campaigns
             <Icon name="ArrowRight" size={16} className="ml-1" />
           </button>
+
         </div>
 
         {/* Stats Preview */}

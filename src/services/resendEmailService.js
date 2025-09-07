@@ -6,8 +6,8 @@ import { supabase } from '../lib/supabase';
 class ResendEmailService {
   constructor() {
     this.apiEndpoint = `${import.meta.env?.VITE_SUPABASE_URL}/functions/v1/resend-email`;
-    console.log('[ENV] Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-console.log('[ENV] Supabase Anon Key:', import.meta.env.VITE_SUPABASE_ANON_KEY);
+//     console.log('[ENV] Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+// console.log('[ENV] Supabase Anon Key:', import.meta.env.VITE_SUPABASE_ANON_KEY);
   }
 
   /**

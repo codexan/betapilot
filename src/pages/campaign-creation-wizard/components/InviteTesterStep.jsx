@@ -442,7 +442,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
           </div>
 
           {/* Google OAuth Integration */}
-          <div>
+          {/* <div>
             <h3 className="text-lg font-medium text-foreground mb-4">Gmail Integration</h3>
             <div className="space-y-4">
               <GoogleOAuthButton
@@ -450,7 +450,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                 showDisconnect={true}
               />
               
-              {/* Gmail sending option */}
+              
               {isGoogleConnected && (
                 <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                   <div className="flex items-center space-x-2 mb-2">
@@ -482,19 +482,19 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
 
           {/* Enhanced Email Provider Integration */}
           <div>
             <h3 className="text-lg font-medium text-foreground mb-4">Email Provider Options</h3>
             <div className="space-y-4">
               {/* Gmail Integration */}
-              <div className="border border-border rounded-lg p-4">
+              {/* <div className="border border-border rounded-lg p-4">
                 <h4 className="font-medium text-foreground mb-2 flex items-center">
                   <AppIcon name="Mail" size={16} className="mr-2" />
                   Gmail Integration
                 </h4>
-                <GoogleOAuthButton
+                <GoogleOAuthButton  
                   onConnectionChange={handleGoogleConnectionChange}
                   showDisconnect={true}
                 />
@@ -522,7 +522,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                     </Button>
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {/* Resend Integration */}
               <div className="border border-border rounded-lg p-4">
@@ -854,7 +854,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
               </Button>
               
               {/* Regular Send */}
-              <Button
+              {/* <Button
                 variant="outline"
                 size="sm"
                 onClick={onSendNow}
@@ -865,7 +865,19 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                 iconSize={14}
               >
                 Send Invitations Now
+              </Button> */}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled
+                className="bg-muted/10 text-muted-foreground border-muted/20 cursor-not-allowed"
+                iconName="Zap"
+                iconPosition="left"
+                iconSize={14}
+              >
+                Send Invitations Now
               </Button>
+
             </div>
           </div>
         </div>

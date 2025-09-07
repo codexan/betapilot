@@ -265,11 +265,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSave }) => {
                   required
                   options={organizationOptions}
                   value={formData?.organization || ''}
-                  // onChange={(value) => handleInputChange('organization', value)}
-                  onChange={(selectedValue) => {
-                    handleInputChange('organization', selectedValue);
-                  }}
-                                    
+                  onChange={(value) => handleInputChange('organization', value)}
                   error={errors?.organization}
                   placeholder="Select organization"
                   searchable
