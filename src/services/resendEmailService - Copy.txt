@@ -41,7 +41,7 @@ console.log('[ENV] Supabase Anon Key:', import.meta.env.VITE_SUPABASE_ANON_KEY);
         const configResult = await this.getUserConfig(session?.user?.id);
         if (configResult?.success && configResult?.data) {
           userConfiguration = {
-            senderEmail: configResult?.data?.sender_email || userConfig?.senderEmail || 'PM Name (BetaPilot) <notifications@melvimiranda.com>',
+            senderEmail: configResult?.data?.sender_email || userConfig?.senderEmail || 'PM Name (BetaPilot) <notifications@betapilot.com>',
             senderName: configResult?.data?.sender_name || userConfig?.senderName || 'PM Name (BetaPilot)'
           };
         }
@@ -49,7 +49,7 @@ console.log('[ENV] Supabase Anon Key:', import.meta.env.VITE_SUPABASE_ANON_KEY);
         console.warn('Failed to get user config, using defaults:', configError?.message);
         // Continue with provided userConfig or defaults
         userConfiguration = {
-          senderEmail: userConfig?.senderEmail || 'PM Name (BetaPilot) <notifications@melvimiranda.com>',
+          senderEmail: userConfig?.senderEmail || 'PM Name (BetaPilot) <notifications@betapilot.com>',
           senderName: userConfig?.senderName || 'PM Name (BetaPilot)'
         };
       }
@@ -297,7 +297,7 @@ console.log('Response headers:', [...response.headers.entries()]);
       const payload = {
         user_id: userId,
         sender_name: config?.senderName ?? 'PM Name (BetaPilot)',
-        sender_email: config?.senderEmail ?? 'notifications@melvimiranda.com',
+        sender_email: config?.senderEmail ?? 'notifications@betapilot.com',
         is_verified: config?.isVerified ?? false,
         domain_verified: config?.domainVerified ?? false,
         updated_at: now,

@@ -1,107 +1,90 @@
-import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
+/// <reference path="./deno.d.ts" />
 
-// Add Deno global declaration at the top
-declare const Deno: any;
+// Import types
+import type { EmailRequestPayload, Invitation, CampaignData, UserConfig, ResendSuccessResponse, ResendErrorResponse } from "./types.d.ts";
 
-serve(async (req) => {
+// Get environment variables directly from Deno.env
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+
+// Supabase Edge Functions handler
+Deno.serve(async (req: Request) => {
   // ✅ CORS preflight
-  if (req?.method === "OPTIONS") {
+  if (req.method === "OPTIONS") {
     return new Response("ok", {
       headers: {
-        "Access-Control-Allow-Origin": "*", // DO NOT CHANGE THIS
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "*" // DO NOT CHANGE THIS
+        "Access-Control-Allow-Headers": "*"
       }
     });
   }
-  
+
   try {
-    // Parse request body
-    const { invitations, campaignData, userConfig } = await req?.json();
-    
-    // Get Resend API key from environment
-    const resendApiKey = Deno?.env?.get('RESEND_API_KEY');
+    const { invitations, campaignData, userConfig } = await req.json() as EmailRequestPayload;
+    console.log('Resend API Key:', resendApiKey ? 'Loaded' : 'Missing');
+
     if (!resendApiKey) {
-      throw new Error('Resend API key not configured');
+      throw new Error("Resend API key not configured");
     }
 
-    // Prepare batch email requests
     const emailResults = [];
-    
+
     for (const invitation of invitations) {
       try {
-        // Prepare email content with personalization
-        const personalizedSubject = campaignData?.emailSubject?.replace(/{{([^}]+)}}/g, (match, key) => {
-          switch (key?.trim()) {
-            case 'first_name':
-              return invitation?.firstName || 'there';
-            case 'campaign_name':
-              return campaignData?.campaignName || 'Beta Program';
-            default:
-              return match;
+        const personalizedSubject = campaignData.emailSubject.replace(/{{([^}]+)}}/g, (_: string, key: string) => {
+          switch (key.trim()) {
+            case "first_name": return invitation.firstName || "there";
+            case "campaign_name": return campaignData.campaignName || "Beta Program";
+            default: return _;
           }
         });
 
-        const personalizedContent = campaignData?.emailContent?.replace(/{{([^}]+)}}/g, (match, key) => {
-          switch (key?.trim()) {
-            case 'first_name':
-              return invitation?.firstName || 'there';
-            case 'campaign_name':
-              return campaignData?.campaignName || 'Beta Program';
-            default:
-              return match;
+        const personalizedContent = campaignData.emailContent.replace(/{{([^}]+)}}/g, (_: string, key: string) => {
+          switch (key.trim()) {
+            case "first_name": return invitation.firstName || "there";
+            case "campaign_name": return campaignData.campaignName || "Beta Program";
+            default: return _;
           }
         });
 
-        // Add automatic signature
-        const emailContent = personalizedContent + '\n\n— The BetaPilot Team';
+        const emailContent = personalizedContent + "\n\n— The BetaPilot Team";
 
-        // Send email via Resend API
-        const resendResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
+        const resendResponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
+            "Authorization": `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            from: userConfig?.senderEmail || 'PM Name (BetaPilot) <notifications@betapilot.com>',
-            to: [invitation?.email],
+            from: `${userConfig?.senderName ?? "PilotBeta"} <${userConfig?.senderEmail ?? "betapilot@melvimiranda.com"}>`,
+            to: [invitation.email],
             subject: personalizedSubject,
-            html: emailContent?.replace(/\n/g, '<br>'), // Convert to HTML
-            text: emailContent, // Plain text fallback
-          }),
+            html: emailContent.replace(/\n/g, "<br>"),
+            text: emailContent
+          })
         });
 
-        const resendData = await resendResponse?.json();
+        const resendData = await resendResponse.json() as ResendSuccessResponse | ResendErrorResponse;
 
-        if (resendResponse?.ok) {
-          emailResults?.push({
-            email: invitation?.email,
-            success: true,
-            messageId: resendData?.id,
-            status: 'sent'
-          });
-        } else {
-          emailResults?.push({
-            email: invitation?.email,
-            success: false,
-            error: resendData?.message || 'Failed to send email',
-            status: 'failed'
-          });
-        }
+        emailResults.push({
+          email: invitation.email,
+          success: resendResponse.ok,
+          messageId: resendResponse.ok ? (resendData as ResendSuccessResponse).id : undefined,
+          error: resendResponse.ok ? null : (resendData as ResendErrorResponse).message || "Failed to send email",
+          status: resendResponse.ok ? "sent" : "failed"
+        });
       } catch (emailError) {
-        emailResults?.push({
-          email: invitation?.email,
+        emailResults.push({
+          email: invitation.email,
           success: false,
-          error: emailError?.message,
-          status: 'failed'
+          error: emailError instanceof Error ? emailError.message : String(emailError),
+          status: "failed"
         });
       }
     }
 
-    // Calculate stats
-    const successCount = emailResults?.filter(result => result?.success)?.length;
-    const failureCount = emailResults?.filter(result => !result?.success)?.length;
+    const successCount = emailResults.filter(r => r.success).length;
+    const failureCount = emailResults.length - successCount;
 
     return new Response(JSON.stringify({
       success: true,
@@ -115,19 +98,19 @@ serve(async (req) => {
     }), {
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*" // DO NOT CHANGE THIS
+        "Access-Control-Allow-Origin": "*"
       }
     });
   } catch (error) {
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       results: []
     }), {
       status: 500,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*" // DO NOT CHANGE THIS
+        "Access-Control-Allow-Origin": "*"
       }
     });
   }
