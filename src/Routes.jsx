@@ -1,5 +1,6 @@
 import React from "react";
-import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
+import { Navigate,BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
+
 import ScrollToTop from "components/ScrollToTop";
 import ErrorBoundary from "components/ErrorBoundary";
 import NotFound from "pages/NotFound";
@@ -13,6 +14,7 @@ import CalendarIntegrationHub from './pages/calendar-integration-hub';
 import CampaignCreationWizard from './pages/campaign-creation-wizard/index';
 import GoogleOAuthCallback from "./components/oauth/GoogleOAuthCallback";
 
+
 const Routes = () => {
   return (
     <BrowserRouter>
@@ -20,7 +22,7 @@ const Routes = () => {
         <ScrollToTop />
         <RouterRoutes>
           {/* Define your route here */}
-          <Route path="/" element={<CustomerDirectory />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/customer-profile" element={<CustomerProfile />} />
           <Route path="/login" element={<Login />} />
           <Route path="/customer-directory" element={<CustomerDirectory />} />

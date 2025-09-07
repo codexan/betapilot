@@ -68,38 +68,6 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
   }, []);
 
   // Enhanced Load Resend configuration with authentication check
-  // useEffect(() => {
-  //   const loadResendConfig = async () => {
-  //     // Wait for user to be loaded and ensure valid session
-  //     if (!user?.id || !session) {
-  //       console.warn('No authenticated user found, skipping Resend config load');
-  //       return;
-  //     }
-
-  //     try {
-  //       const result = await resendEmailService?.getUserConfig(user?.id);
-  //       if (result?.success && result?.data?.sender_email && result?.data?.sender_name) {
-  //         console.log('Resend config loaded:', result?.data);
-  //         setResendConfig(result.data);
-  //       } else {
-  //         console.warn('Resend config missing required fields:', result?.data);
-  //         updateData({ resendError: 'Resend configuration incomplete. Please check sender settings.' });
-  //       }
-        
-  //       if (result?.success && result?.data) {
-  //         console.log('Resend config loaded:', result?.data);
-  //         setResendConfig(result?.data);
-  //       } else if (result?.error) {
-  //         console.warn('Failed to load Resend config:', result?.error);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error loading Resend config:', error);
-  //     }
-  //   };
-
-  //   loadResendConfig();
-  // }, [user?.id, session]); // Depend on user and session
-
   useEffect(() => {
     const loadResendConfig = async () => {
       // Wait for user to be loaded and ensure valid session
@@ -107,27 +75,21 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
         console.warn('No authenticated user found, skipping Resend config load');
         return;
       }
-  
+
       try {
         const result = await resendEmailService?.getUserConfig(user?.id);
-  
-        if (result?.success && result?.data?.sender_email && result?.data?.sender_name) {
-          console.log('Resend config loaded:', result.data);
-          setResendConfig(result.data);
-        } else if (result?.success) {
-          console.warn('Resend config missing required fields:', result.data);
-          updateData({ resendError: 'Resend configuration incomplete. Please check sender settings.' });
+        if (result?.success && result?.data) {
+          setResendConfig(result?.data);
         } else if (result?.error) {
-          console.warn('Failed to load Resend config:', result.error);
+          console.warn('Failed to load Resend config:', result?.error);
         }
       } catch (error) {
         console.error('Error loading Resend config:', error);
       }
     };
-  
+
     loadResendConfig();
-  }, [user?.id, session]);
-  
+  }, [user?.id, session]); // Depend on user and session
 
   // Filter customers based on search and segment
   useEffect(() => {
@@ -248,12 +210,6 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
       return;
     }
 
-    // ✅ Validate Resend config early
-    if (!resendConfig?.sender_email || !resendConfig?.sender_name) {
-      console.error('Missing sender configuration for Resend');
-      updateData({ resendError: 'Missing sender configuration' });
-      return;
-    }
     try {
       setSendingViaResend(true);
 
@@ -282,8 +238,6 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
 
       // Send batch invitations via Resend
       const result = await resendEmailService?.sendBatchInvitations(invitations, campaignData, userConfig);
-      // ✅ Log full response for debugging
-      console.log('Resend full response:', result);
 
       if (result?.success) {
         const successCount = result?.stats?.sent || 0;
@@ -304,23 +258,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
 
         if (failureCount > 0) {
           console.error(`Failed to send ${failureCount} invitations via Resend`);
-          // ✅ Surface partial failure to UI
-          updateData({
-            resendError: `${failureCount} invitations failed to send via Resend`,
-            testersPending: failureCount
-          });
         }
-
-        // ✅ Inspect individual failures (if available)
-        const failedEmails = result?.data?.filter(inv => !inv?.success);
-        if (failedEmails?.length) {
-          console.error('Failed invitations:', failedEmails);
-          updateData({
-            resendError: `${failedEmails.length} invitations failed`,
-            testersPending: failedEmails.length
-          });
-        }
-
       } else {
         throw new Error(result?.error || 'Failed to send emails via Resend');
       }
