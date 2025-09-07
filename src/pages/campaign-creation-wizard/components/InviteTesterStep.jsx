@@ -8,6 +8,8 @@ import LoadingIndicator from '../../../components/ui/LoadingIndicator';
 import AppIcon from '../../../components/AppIcon';
 import GoogleOAuthButton from '../../../components/oauth/GoogleOAuthButton';
 import { googleOAuthService } from '../../../services/googleOAuthService';
+import { resendEmailService } from '../../../services/resendEmailService';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading }) => {
   const [customers, setCustomers] = useState([]);
@@ -21,6 +23,13 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [googleEmail, setGoogleEmail] = useState('');
   const [sendingViaGmail, setSendingViaGmail] = useState(false);
+
+  // Resend email state
+  const [sendingViaResend, setSendingViaResend] = useState(false);
+  const [resendConfig, setResendConfig] = useState(null);
+
+  // Get authentication context
+  const { user, session } = useAuth();
 
   // Email template options
   const emailTemplates = [
@@ -57,6 +66,30 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
 
     fetchCustomers();
   }, []);
+
+  // Enhanced Load Resend configuration with authentication check
+  useEffect(() => {
+    const loadResendConfig = async () => {
+      // Wait for user to be loaded and ensure valid session
+      if (!user?.id || !session) {
+        console.warn('No authenticated user found, skipping Resend config load');
+        return;
+      }
+
+      try {
+        const result = await resendEmailService?.getUserConfig(user?.id);
+        if (result?.success && result?.data) {
+          setResendConfig(result?.data);
+        } else if (result?.error) {
+          console.warn('Failed to load Resend config:', result?.error);
+        }
+      } catch (error) {
+        console.error('Error loading Resend config:', error);
+      }
+    };
+
+    loadResendConfig();
+  }, [user?.id, session]); // Depend on user and session
 
   // Filter customers based on search and segment
   useEffect(() => {
@@ -153,6 +186,92 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
       googleConnected: connected,
       googleEmail: email || ''
     });
+  };
+
+  // Enhanced Resend email sending with better authentication handling
+  const handleSendViaResend = async () => {
+    if (!data?.selectedTesters?.length) {
+      console.error('No testers selected for invitation');
+      return;
+    }
+
+    if (!data?.emailSubject) {
+      console.error('Email subject is required');
+      return;
+    }
+
+    // Enhanced authentication check
+    if (!user?.id || !session) {
+      console.error('User authentication required for sending emails');
+      updateData({
+        testersPending: data?.selectedTesters?.length || 0,
+        resendError: 'Authentication required - please sign in again'
+      });
+      return;
+    }
+
+    try {
+      setSendingViaResend(true);
+
+      // Prepare invitations data for Resend
+      const invitations = data?.selectedTesters?.map(tester => ({
+        email: tester?.email,
+        firstName: tester?.first_name,
+        lastName: tester?.last_name,
+        betaInvitationId: null // Will be created if needed
+      }));
+
+      // Campaign data for email content
+      const campaignData = {
+        campaignName: data?.name,
+        campaignId: data?.betaProgramId,
+        emailSubject: data?.emailSubject,
+        emailContent: data?.emailContent,
+        senderName: resendConfig?.sender_name || 'PM Name (BetaPilot)'
+      };
+
+      // User configuration
+      const userConfig = {
+        senderEmail: resendConfig?.sender_email || 'PM Name (BetaPilot) <notifications@betapilot.com>',
+        senderName: resendConfig?.sender_name || 'PM Name (BetaPilot)'
+      };
+
+      // Send batch invitations via Resend
+      const result = await resendEmailService?.sendBatchInvitations(invitations, campaignData, userConfig);
+
+      if (result?.success) {
+        const successCount = result?.stats?.sent || 0;
+        const failureCount = result?.stats?.failed || 0;
+
+        // Update campaign data with results
+        updateData({
+          testersInvited: (data?.testersInvited || 0) + successCount,
+          testersPending: failureCount,
+          resendResults: result?.data,
+          emailProvider: 'resend'
+        });
+
+        // Show success notification
+        if (successCount > 0) {
+          console.log(`Successfully sent ${successCount} invitations via Resend`);
+        }
+
+        if (failureCount > 0) {
+          console.error(`Failed to send ${failureCount} invitations via Resend`);
+        }
+      } else {
+        throw new Error(result?.error || 'Failed to send emails via Resend');
+      }
+
+    } catch (error) {
+      console.error('Resend send error:', error);
+      updateData({
+        testersPending: data?.selectedTesters?.length || 0,
+        resendError: error?.message
+      });
+    } finally {
+      setSendingViaResend(false);
+    }
   };
 
   // Handle send invitations via Gmail
@@ -273,7 +392,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
               {isGoogleConnected && (
                 <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                   <div className="flex items-center space-x-2 mb-2">
-                    <AppIcon name="Zap" size={16} className="text-primary" />
+                    <AppIcon name="Zap" size={14} className="text-primary" />
                     <span className="text-sm font-medium text-foreground">Gmail Direct Send</span>
                   </div>
                   <p className="text-sm text-muted-foreground mb-3">
@@ -287,19 +406,107 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                     className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
                     iconName="Send"
                     iconPosition="left"
-                    iconSize={14}
+                    iconSize={12}
                   >
                     {sendingViaGmail ? (
                       <>
-                        <AppIcon name="Loader2" size={14} className="animate-spin mr-2" />
+                        <AppIcon name="Loader2" size={12} className="animate-spin mr-2" />
                         Sending via Gmail...
                       </>
                     ) : (
-                      `Send ${selectedCount} Invitations via Gmail`
+                      `Send ${selectedCount} via Gmail`
                     )}
                   </Button>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Enhanced Email Provider Integration */}
+          <div>
+            <h3 className="text-lg font-medium text-foreground mb-4">Email Provider Options</h3>
+            <div className="space-y-4">
+              {/* Gmail Integration */}
+              <div className="border border-border rounded-lg p-4">
+                <h4 className="font-medium text-foreground mb-2 flex items-center">
+                  <AppIcon name="Mail" size={16} className="mr-2" />
+                  Gmail Integration
+                </h4>
+                <GoogleOAuthButton
+                  onConnectionChange={handleGoogleConnectionChange}
+                  showDisconnect={true}
+                />
+                
+                {isGoogleConnected && (
+                  <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <AppIcon name="Zap" size={14} className="text-primary" />
+                      <span className="text-sm font-medium text-foreground">Gmail Direct Send</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Send from: {googleEmail}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSendViaGmail}
+                      disabled={sendingViaGmail || selectedCount === 0 || !data?.emailSubject}
+                      className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                      iconName="Send"
+                      iconPosition="left"
+                      iconSize={12}
+                    >
+                      {sendingViaGmail ? 'Sending via Gmail...' : `Send ${selectedCount} via Gmail`}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Resend Integration */}
+              <div className="border border-border rounded-lg p-4">
+                <h4 className="font-medium text-foreground mb-2 flex items-center">
+                  <AppIcon name="Send" size={16} className="mr-2" />
+                  Resend Integration
+                </h4>
+                <div className="space-y-3">
+                  <div className="p-3 bg-success/5 border border-success/20 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <AppIcon name="CheckCircle" size={14} className="text-success" />
+                      <span className="text-sm font-medium text-foreground">Resend Email Service</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Send from: {resendConfig?.sender_email || 'notifications@betapilot.com'}
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSendViaResend}
+                        disabled={sendingViaResend || selectedCount === 0 || !data?.emailSubject}
+                        className="bg-success/10 text-success border-success/20 hover:bg-success/20"
+                        iconName="Send"
+                        iconPosition="left"
+                        iconSize={12}
+                      >
+                        {sendingViaResend ? (
+                          <>
+                            <AppIcon name="Loader2" size={12} className="animate-spin mr-2" />
+                            Sending via Resend...
+                          </>
+                        ) : (
+                          `Send ${selectedCount} via Resend`
+                        )}
+                      </Button>
+                      
+                      {/* Resend Status Indicator */}
+                      <div className="flex items-center space-x-1">
+                        <div className="w-2 h-2 bg-success rounded-full"></div>
+                        <span className="text-xs text-success">Ready</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -539,7 +746,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
         </div>
       </div>
 
-      {/* Enhanced Campaign Summary with Actions */}
+      {/* Enhanced Campaign Summary with Resend Support */}
       <div className="bg-muted/30 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h4 className="font-medium text-foreground">Campaign Summary</h4>
@@ -552,7 +759,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
               </span>
             </div>
             
-            {/* Send Now Actions */}
+            {/* Enhanced Send Now Actions */}
             <div className="flex items-center space-x-2">
               {/* Gmail Direct Send */}
               {isGoogleConnected && (
@@ -561,7 +768,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                   size="sm"
                   onClick={handleSendViaGmail}
                   disabled={sendingViaGmail || selectedCount === 0 || !data?.emailSubject}
-                  className="bg-success/10 text-success border-success/20 hover:bg-success/20"
+                  className="bg-blue/10 text-blue border-blue/20 hover:bg-blue/20"
                   iconName="Mail"
                   iconPosition="left"
                   iconSize={14}
@@ -570,6 +777,20 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                 </Button>
               )}
               
+              {/* Resend Direct Send */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSendViaResend}
+                disabled={sendingViaResend || selectedCount === 0 || !data?.emailSubject}
+                className="bg-success/10 text-success border-success/20 hover:bg-success/20"
+                iconName="Send"
+                iconPosition="left"
+                iconSize={14}
+              >
+                Send via Resend
+              </Button>
+              
               {/* Regular Send */}
               <Button
                 variant="outline"
@@ -577,7 +798,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                 onClick={onSendNow}
                 disabled={loading || selectedCount === 0 || !data?.emailSubject}
                 className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20"
-                iconName="Send"
+                iconName="Zap"
                 iconPosition="left"
                 iconSize={14}
               >
@@ -599,7 +820,9 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
           <div>
             <span className="text-muted-foreground">Send Method:</span>
             <p className="font-medium text-foreground">
-              {isGoogleConnected ? `Gmail (${googleEmail})` : 'Platform Email'}
+              {data?.emailProvider === 'resend' ? 'Resend'
+                : isGoogleConnected ? `Gmail (${googleEmail})` 
+                : 'Platform Email'}
             </p>
           </div>
           <div>
@@ -616,7 +839,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
           </div>
         </div>
 
-        {/* Progress Status */}
+        {/* Enhanced Progress Status */}
         {(data?.testersInvited > 0 || data?.testersPending > 0) && (
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex items-center justify-between text-sm">
@@ -630,12 +853,20 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                   <div className="w-2 h-2 bg-warning rounded-full"></div>
                   <span className="text-foreground">Pending: {data?.testersPending || 0}</span>
                 </div>
-                {isGoogleConnected && (
-                  <div className="flex items-center space-x-2">
-                    <AppIcon name="Mail" size={12} className="text-primary" />
-                    <span className="text-foreground text-xs">Gmail Connected</span>
+                
+                {/* Provider Status Indicators */}
+                <div className="flex items-center space-x-3">
+                  {isGoogleConnected && (
+                    <div className="flex items-center space-x-1">
+                      <AppIcon name="Mail" size={12} className="text-blue" />
+                      <span className="text-foreground text-xs">Gmail</span>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-1">
+                    <AppIcon name="Send" size={12} className="text-success" />
+                    <span className="text-foreground text-xs">Resend</span>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
