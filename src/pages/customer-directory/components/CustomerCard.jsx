@@ -75,7 +75,7 @@ const CustomerCard = ({
               <Icon name="Eye" size={16} />
             </Button>
           </Link>
-          <Button
+          <Button disabled
             variant="ghost"
             size="sm"
             onClick={() => onBulkEmail([customer?.id])}

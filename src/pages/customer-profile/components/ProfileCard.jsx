@@ -201,10 +201,20 @@ const ProfileCard = ({ customer, onSave, onSendEmail, onAddToBeta }) => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button variant="default" onClick={onSendEmail} iconName="Mail" iconPosition="left">
+              {/* <Button  variant="default" onClick={onSendEmail} iconName="Mail" iconPosition="left">
+                Send Email
+              </Button> */}
+              <Button
+                variant="default"
+                disabled
+                iconName="Mail"
+                iconPosition="left"
+                className="cursor-not-allowed opacity-50"
+              >
                 Send Email
               </Button>
-              <Button variant="outline" onClick={onAddToBeta} iconName="Plus" iconPosition="left">
+
+              <Button disabled variant="outline" onClick={onAddToBeta} iconName="Plus" iconPosition="left" className="cursor-not-allowed opacity-50">
                 Add to Beta
               </Button>
             </div>
