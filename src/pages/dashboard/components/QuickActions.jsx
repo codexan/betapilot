@@ -8,12 +8,20 @@ const QuickActions = () => {
 
   const quickActions = [
     {
+      id: 0,
+      title: 'Start New Campaign',
+      description: 'Launch a 4-step beta campaign wizard',
+      icon: 'Rocket',
+      action: () => navigate('/campaign/create'),
+      variant: 'default'
+    },
+    {
       id: 1,
       title: 'Invite New Testers',
       description: 'Add testers to your beta program',
       icon: 'UserPlus',
       action: () => navigate('/customer-directory'),
-      variant: 'default'
+      variant: 'outline'
     },
     {
       id: 2,
@@ -80,8 +88,12 @@ const QuickActions = () => {
           {quickActions?.map((action) => (
             <div key={action?.id} className="flex items-center justify-between p-4 border border-border rounded-md hover:bg-muted/50 transition-smooth">
               <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
-                  <Icon name={action?.icon} size={20} className="text-primary" />
+                <div className={`flex items-center justify-center w-10 h-10 rounded-lg ${
+                  action?.id === 0 ? 'bg-primary/20' : 'bg-primary/10'
+                }`}>
+                  <Icon name={action?.icon} size={20} className={`${
+                    action?.id === 0 ? 'text-primary' : 'text-primary'
+                  }`} />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-foreground">{action?.title}</h3>

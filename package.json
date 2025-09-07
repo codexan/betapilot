@@ -2,7 +2,6 @@
     "name": "betapilot",
     "version": "0.1.0",
     "private": true,
-    
     "rocketCritical": {
         "dependencies": [
             "@dhiwise/component-tagger",
@@ -25,13 +24,13 @@
             "build",
             "serve"
         ],
-        "warning": "\ud83d\udea8 CRITICAL: DO NOT REMOVE OR MODIFY ABOVE DEPENDENCIES - Required for app functionality"
+        "warning": "🚨 CRITICAL: DO NOT REMOVE OR MODIFY ABOVE DEPENDENCIES - Required for app functionality"
     },
     "dependencies": {
         "@dhiwise/component-tagger": "^1.0.10",
         "@radix-ui/react-slot": "^1.2.3",
         "@reduxjs/toolkit": "^2.6.1",
-        "@supabase/supabase-js": "^2.56.0",
+        "@supabase/supabase-js": "^2.57.2",
         "@tailwindcss/forms": "^0.5.7",
         "@testing-library/jest-dom": "^5.15.1",
         "@testing-library/react": "^11.2.7",
@@ -43,6 +42,7 @@
         "date-fns": "^4.1.0",
         "dotenv": "^16.0.1",
         "framer-motion": "^10.16.4",
+        "googleapis": "^159.0.0",
         "lucide-react": "^0.484.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
@@ -60,8 +60,7 @@
     "scripts": {
         "start": "vite",
         "build": "vite build --sourcemap",
-        "serve": "vite preview",
-        "test:customer": "node src/services/tests/testAddCustomer.js"
+        "serve": "vite preview"
     },
     "eslintConfig": {
         "extends": [

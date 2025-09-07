@@ -154,7 +154,6 @@ const AddCustomerModal = ({ isOpen, onClose, onSave }) => {
       }
 
       // Use Supabase service to create customer
-      console.log('Testing The sanitizedData:', sanitizedData);
       const { data, error } = await createCustomer(sanitizedData);
       
       if (error) {
