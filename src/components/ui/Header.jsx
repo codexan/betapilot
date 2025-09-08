@@ -3,14 +3,20 @@ import { Link, useLocation } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
 
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
 const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { signOut } = useAuth();
+
 
   const navigationItems = [
     { label: 'Dashboard', path: '/dashboard', icon: 'BarChart3' },
-    { label: 'Customers', path: '/customer-directory', icon: 'Users' },
+    { label: 'Customers', path: '/customer-directory', icon: 'Users' }, 
     { label: 'Templates', path: '/email-templates', icon: 'Mail' },
     { label: 'Workflows', path: '/workflow-builder', icon: 'GitBranch' },
   ];
@@ -30,10 +36,18 @@ const Header = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Logout logic here
     console.log('Logout clicked');
+    
+    const { error } = await signOut();
     setIsUserMenuOpen(false);
+    if (error) {
+      console.error('Error signing out:', error);
+      // optionally show a toast here
+    } else {
+      navigate('/login', { replace: true });
+    }
   };
 
   return (

@@ -3,8 +3,6 @@ import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
 import Input from '../../../components/ui/Input';
 import AppIcon from '../../../components/AppIcon';
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 
 const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading }) => {
   const [selectedDate, setSelectedDate] = useState('');
@@ -12,10 +10,6 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
   const [slotDuration, setSlotDuration] = useState(30);
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [viewType, setViewType] = useState('calendar'); // calendar or list
-
-  const [workStart, setWorkStart] = useState('09:00'); //to set user defined working hours
-  const [workEnd, setWorkEnd] = useState('17:00');
-
 
   // Initialize available slots from data
   useEffect(() => {
@@ -25,45 +19,33 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
   }, [data?.availableSlots]);
 
   // Generate time slots for a day
-  const generateTimeSlots = (date, duration = 30, start = '09:00', end = '17:00') => {
+  const generateTimeSlots = (date, duration = 30) => {
     const slots = [];
-    const [startHour, startMinute] = start.split(':').map(Number);
-    const [endHour, endMinute] = end.split(':').map(Number);
-  
-    let currentHour = startHour;
-    let currentMinute = startMinute;
-  
-    while (
-      currentHour < endHour ||
-      (currentHour === endHour && currentMinute < endMinute)
-    ) {
-      const startTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
-      const totalMinutes = currentHour * 60 + currentMinute + duration;
-      const endTimeHour = Math.floor(totalMinutes / 60);
-      const endTimeMinute = totalMinutes % 60;
-      const endTime = `${String(endTimeHour).padStart(2, '0')}:${String(endTimeMinute).padStart(2, '0')}`;
-  
-      if (
-        endTimeHour < endHour ||
-        (endTimeHour === endHour && endTimeMinute <= endMinute)
-      ) {
-        slots.push({
-          id: `${date}-${startTime}`,
-          date,
-          startTime,
-          endTime,
-          duration,
-          booked: false
-        });
+    const startHour = 9; // 9 AM
+    const endHour = 17; // 5 PM
+    
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += duration) {
+        const startTime = `${hour?.toString()?.padStart(2, '0')}:${minute?.toString()?.padStart(2, '0')}`;
+        const endMinute = minute + duration;
+        const endTimeHour = endMinute >= 60 ? hour + 1 : hour;
+        const endTimeMinute = endMinute >= 60 ? endMinute - 60 : endMinute;
+        const endTime = `${endTimeHour?.toString()?.padStart(2, '0')}:${endTimeMinute?.toString()?.padStart(2, '0')}`;
+        
+        if (endTimeHour <= endHour) {
+          slots?.push({
+            id: `${date}-${startTime}`,
+            date,
+            startTime,
+            endTime,
+            duration,
+            booked: false
+          });
+        }
       }
-  
-      currentHour = endTimeHour;
-      currentMinute = endTimeMinute;
     }
-  
     return slots;
   };
-  
 
   // Get dates for the next 30 days
   const getAvailableDates = () => {
@@ -92,20 +74,19 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
   // Add multiple time slots for a date
   const handleAddDaySlots = () => {
     if (!selectedDate) return;
-  
-    const newSlots = generateTimeSlots(selectedDate, slotDuration, workStart, workEnd);
+    
+    const newSlots = generateTimeSlots(selectedDate, slotDuration);
     const updatedSlots = [...selectedSlots];
-  
-    newSlots.forEach(slot => {
-      if (!updatedSlots.some(existing => existing.id === slot.id)) {
-        updatedSlots.push(slot);
+    
+    newSlots?.forEach(slot => {
+      if (!updatedSlots?.some(existing => existing?.id === slot?.id)) {
+        updatedSlots?.push(slot);
       }
     });
-  
+    
     setSelectedSlots(updatedSlots);
     updateData({ availableSlots: updatedSlots });
   };
-  
 
   // Add a single custom slot
   const handleAddCustomSlot = () => {
@@ -173,22 +154,6 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
             <h3 className="text-lg font-medium text-foreground mb-4">Slot Configuration</h3>
             
             <div className="space-y-4">
-              {/* User defined working hours */}
-            <Input
-              label="Work Start Time"
-              type="time"
-              value={workStart}
-              onChange={(e) => setWorkStart(e.target.value)}
-            />
-
-            <Input
-              label="Work End Time"
-              type="time"
-              value={workEnd}
-              onChange={(e) => setWorkEnd(e.target.value)}
-            />
-
-
               {/* Duration Setting */}
               <Select
                 label="Slot Duration"
@@ -203,7 +168,7 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
               />
 
               {/* Date Selection */}
-              {/* <Select
+              <Select
                 label="Select Date"
                 value={selectedDate}
                 onChange={setSelectedDate}
@@ -211,20 +176,6 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
                   { value: '', label: 'Choose a date' },
                   ...availableDates
                 ]}
-              /> */}
-              {/* <Input
-                label="Select Date"
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]} // today
-              /> */}
-              <DatePicker
-                selected={selectedDate ? new Date(selectedDate) : null}
-                onChange={(date) => setSelectedDate(date.toISOString().split('T')[0])}
-                minDate={new Date()}
-                dateFormat="yyyy-MM-dd"
-                placeholderText="Select a date"
               />
 
               {/* Time Selection for Custom Slot */}
