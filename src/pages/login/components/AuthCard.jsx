@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import SSOButton from './SSOButton';
@@ -12,6 +12,7 @@ import LoadingIndicator from '../../../components/ui/LoadingIndicator';
 
 const AuthCard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signInWithOAuth, signInWithDemo, signIn } = useAuth();
   const [loadingProvider, setLoadingProvider] = useState(null);
   const [authMode, setAuthMode] = useState('oauth'); // 'oauth' or 'credentials'
@@ -60,7 +61,9 @@ const AuthCard = () => {
       if (error) {
         setError(error);
       } else {
-        navigate('/dashboard');
+        // Redirect to intended destination or dashboard
+        const from = location.state?.from?.pathname || '/dashboard';
+        navigate(from, { replace: true });
       }
     } catch (error) {
       setError('Demo login failed. Please try again.');
@@ -81,7 +84,9 @@ const AuthCard = () => {
           setError('Login failed. Please try again.');
         }
       } else {
-        navigate('/dashboard');
+        // Redirect to intended destination or dashboard
+        const from = location.state?.from?.pathname || '/dashboard';
+        navigate(from, { replace: true });
       }
     } catch (error) {
       if (error?.message?.includes('Failed to fetch') || 

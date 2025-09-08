@@ -3,6 +3,7 @@ import { Navigate,BrowserRouter, Routes as RouterRoutes, Route } from "react-rou
 
 import ScrollToTop from "components/ScrollToTop";
 import ErrorBoundary from "components/ErrorBoundary";
+import ProtectedRoute from "components/ProtectedRoute";
 import NotFound from "pages/NotFound";
 import CustomerProfile from './pages/customer-profile';
 import Login from './pages/login';
@@ -14,27 +15,26 @@ import CalendarIntegrationHub from './pages/calendar-integration-hub';
 import CampaignCreationWizard from './pages/campaign-creation-wizard/index';
 import GoogleOAuthCallback from "./components/oauth/GoogleOAuthCallback";
 
-
 const Routes = () => {
   return (
     <BrowserRouter>
       <ErrorBoundary>
         <ScrollToTop />
         <RouterRoutes>
-          {/* Define your route here */}
+          {/* Public routes */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/customer-profile" element={<CustomerProfile />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/customer-directory" element={<CustomerDirectory />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/email-templates" element={<EmailTemplates />} />
-          <Route path="/workflow-builder" element={<WorkflowBuilder />} />
-          <Route path="/calendar-integration-hub" element={<CalendarIntegrationHub />} />
-          <Route path="/campaign/create" element={<CampaignCreationWizard />} />
-          <Route path="/campaign-creation-wizard" element={<CampaignCreationWizard />} />
-          
-          {/* Google OAuth Callback Route */}
           <Route path="/oauth/google/callback" element={<GoogleOAuthCallback />} />
+          
+          {/* Protected routes */}
+          <Route path="/customer-profile" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
+          <Route path="/customer-directory" element={<ProtectedRoute><CustomerDirectory /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/email-templates" element={<ProtectedRoute><EmailTemplates /></ProtectedRoute>} />
+          <Route path="/workflow-builder" element={<ProtectedRoute><WorkflowBuilder /></ProtectedRoute>} />
+          <Route path="/calendar-integration-hub" element={<ProtectedRoute><CalendarIntegrationHub /></ProtectedRoute>} />
+          <Route path="/campaign/create" element={<ProtectedRoute><CampaignCreationWizard /></ProtectedRoute>} />
+          <Route path="/campaign-creation-wizard" element={<ProtectedRoute><CampaignCreationWizard /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>
