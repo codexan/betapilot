@@ -43,7 +43,7 @@ export const signIn = async (email, password) => {
 export const signInWithDemo = async () => {
   try {
     const demoCredentials = {
-      email: 'admin@PilotBeta.com',
+      email: 'admin@betapilot.com',
       password: 'admin123'
     }
 

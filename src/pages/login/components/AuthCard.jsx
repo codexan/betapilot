@@ -274,8 +274,8 @@ const AuthCard = () => {
                 <div>
                   <h4 className="text-sm font-medium text-blue-900 mb-1">Demo Credentials</h4>
                   <div className="bg-blue-100 rounded px-3 py-2 text-xs font-mono">
-                    <div>Email: admin@PilotBeta.com</div>
-                    <div>Password: admin123</div>
+                    {/* <div>Email: admin@pilotbeta.com</div>
+                    <div>Password: admin123</div> */}
                   </div>
                 </div>
               </div>
