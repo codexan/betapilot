@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
   const signInWithDemo = async () => {
     try {
       // Demo credentials
-      const demoEmail = 'admin@pilotbeta.com'
+      const demoEmail = 'admin@betapilot.com'
       const demoPassword = 'admin123'
       
       const { data, error } = await supabase?.auth?.signInWithPassword({
