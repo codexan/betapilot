@@ -21,6 +21,7 @@ class CampaignCreationService {
 
   // Create beta invitations for selected testers
   async createBetaInvitations(data) {
+    console.log('track createBetaInvitations_data: ', data);
     try {
       const { data: result, error } = await supabase?.from('beta_invitations')?.insert(data?.invitations?.map(invitation => ({
           beta_program_id: invitation?.beta_program_id,
@@ -136,6 +137,100 @@ class CampaignCreationService {
       return { success: false, error: error?.message };
     }
   }
+
+  // Get all beta programs (campaigns)
+async getAllCampaigns() {
+  try {
+    const { data, error } = await supabase
+      .from('beta_programs')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data: data || [] };
+  } catch (error) {
+    return { success: false, error: error?.message, data: [] };
+  }
+}
+
+
+  // Get customers who received invitations for scheduling emails
+  async getInvitedCustomers(betaProgramId) {
+    try {
+      const { data: invitations, error } = await supabase?.from('beta_invitations')?.select(`
+          *,
+          customers (
+            id,
+            first_name,
+            last_name,
+            email,
+            job_title
+          )
+        `)?.eq('beta_program_id', betaProgramId)?.in('status', ['sent', 'responded']);
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: invitations?.map(inv => ({
+          id: inv?.customers?.id,
+          name: `${inv?.customers?.first_name} ${inv?.customers?.last_name}`,
+          email: inv?.customers?.email,
+          job_title: inv?.customers?.job_title,
+          invitation_status: inv?.status,
+          sent_at: inv?.sent_at,
+          responded_at: inv?.responded_at
+        })) || []
+      };
+    } catch (error) {
+      return { success: false, error: error?.message, data: [] };
+    }
+  }
+
+  // Update campaign draft
+  // async updateCampaignDraft(betaProgramId, data) {
+  //   try {
+  //     const { data: result, error } = await supabase?.from('beta_programs')?.update({
+  //         name: data?.name,
+  //         description: data?.description,
+  //         updated_at: new Date()?.toISOString()
+  //       })?.eq('id', betaProgramId)?.select('*')?.single();
+
+  //     if (error) throw error;
+  //     return { success: true, data: result };
+  //   } catch (error) {
+  //     return { success: false, error: error?.message };
+  //   }
+  // }
+
+  async updateCampaignDraft(betaProgramId, data) {
+    try {
+      if (!betaProgramId || typeof betaProgramId !== 'string') {
+        throw new Error('Invalid betaProgramId');
+      }
+  
+      const updatePayload = {
+        updated_at: new Date().toISOString()
+      };
+  
+      if (data?.name !== undefined) updatePayload.name = data.name;
+      if (data?.description !== undefined) updatePayload.description = data.description;
+  
+      const { data: result, error } = await supabase
+        .from('beta_programs')
+        .update(updatePayload)
+        .eq('id', betaProgramId)
+        .select('*')
+        .single();
+  
+      if (error) throw error;
+      return { success: true, data: result };
+    } catch (error) {
+      console.error('Update failed:', error);
+      return { success: false, error: error?.message };
+    }
+  }
+  
 }
 
 export const campaignCreationService = new CampaignCreationService();

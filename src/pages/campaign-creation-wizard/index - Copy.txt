@@ -15,7 +15,6 @@ import ConfirmationStep from './components/ConfirmationStep';
 // Services
 import { campaignCreationService } from '../../services/campaignCreationService';
 import { schedulingEmailService } from '../../services/schedulingEmailService';
-import { supabase } from '../../lib/supabase';
 
 const CampaignCreationWizard = () => {
   const navigate = useNavigate();
@@ -346,13 +345,6 @@ const CampaignCreationWizard = () => {
       throw new Error('No slots configured');
     }
 
-    // ✅ Get Supabase access token
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const accessToken = session?.access_token;
-
     // Implementation would send scheduling emails with booking links
     // For now, update the slots remaining count
     // Validate that campaign invites were sent first
@@ -381,8 +373,7 @@ const CampaignCreationWizard = () => {
     const sendResult = await schedulingEmailService?.sendSchedulingEmails({
       betaProgramId: savedCampaignId || campaignData?.betaProgramId,
       emailContent: emailResult?.emailContent,
-      recipients: emailResult?.recipients,
-      accessToken // ✅ now included
+      recipients: emailResult?.recipients
     });
 
     if (!sendResult?.success) {

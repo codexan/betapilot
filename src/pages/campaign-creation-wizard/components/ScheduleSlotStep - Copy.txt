@@ -3,13 +3,92 @@ import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
 import Input from '../../../components/ui/Input';
 import AppIcon from '../../../components/AppIcon';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { schedulingEmailService } from '../../../services/schedulingEmailService';
+import { campaignCreationService } from '../../../services/campaignCreationService';
 
-const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading }) => {
+
+
+const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading, onCampaignSelect }) => {
   const [selectedDate, setSelectedDate] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [slotDuration, setSlotDuration] = useState(30);
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [viewType, setViewType] = useState('calendar'); // calendar or list
+
+  const [workStart, setWorkStart] = useState('09:00'); //to set user defined working hours
+  const [workEnd, setWorkEnd] = useState('17:00');
+
+  // Scheduling email states
+  const [emailGenerated, setEmailGenerated] = useState(false);
+  const [emailContent, setEmailContent] = useState(null);
+  const [recipients, setRecipients] = useState([]);
+  const [emailOption, setEmailOption] = useState('ai'); // 'ai', 'template', 'custom'
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [generateLoading, setGenerateLoading] = useState(false);
+  const [validationStatus, setValidationStatus] = useState(null);
+
+  // Campaign selector states
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState('');
+
+    // Fetch campaigns once
+    useEffect(() => {
+      (async () => {
+        try {
+          const result = await campaignCreationService.getAllCampaigns();
+          if (!result?.success || !Array.isArray(result.data)) {
+            console.warn('Campaign fetch failed or returned invalid data:', result);
+            setCampaigns([]);
+            return;
+          }
+          setCampaigns(result.data);
+        } catch (err) {
+          console.error('Failed to load campaigns', err);
+        }
+      })();
+    }, []);
+    console.log('campaigns data: ', campaigns);
+
+  const checkCampaignInvites = async (campaignId) => {
+    try {
+      const validation = await schedulingEmailService.validateCampaignInvites(campaignId);
+      setValidationStatus(validation);
+      if (validation?.valid && validation?.invitedUsers) {
+        setRecipients(validation.invitedUsers);
+      }
+    } catch {
+      setValidationStatus({
+        valid: false,
+        message: 'Failed to validate campaign invites',
+        invitedUsers: []
+      });
+    }
+  };
+  
+   
+   
+
+  // Campaign selector useEffect
+  // useEffect(() => {
+  //   const fetchCampaigns = async () => {
+  //     try {
+  //       const result = await campaignCreationService.getAllCampaigns();
+  //       if (result?.success) {
+  //         setCampaigns(result.data);
+  //       }
+  //     } catch (err) {
+  //       console.error('Failed to load campaigns', err);
+  //     }
+  //   };
+  //   fetchCampaigns();
+  // }, []);
+
+  
+  
+
 
   // Initialize available slots from data
   useEffect(() => {
@@ -18,34 +97,77 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
     }
   }, [data?.availableSlots]);
 
-  // Generate time slots for a day
-  const generateTimeSlots = (date, duration = 30) => {
-    const slots = [];
-    const startHour = 9; // 9 AM
-    const endHour = 17; // 5 PM
-    
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += duration) {
-        const startTime = `${hour?.toString()?.padStart(2, '0')}:${minute?.toString()?.padStart(2, '0')}`;
-        const endMinute = minute + duration;
-        const endTimeHour = endMinute >= 60 ? hour + 1 : hour;
-        const endTimeMinute = endMinute >= 60 ? endMinute - 60 : endMinute;
-        const endTime = `${endTimeHour?.toString()?.padStart(2, '0')}:${endTimeMinute?.toString()?.padStart(2, '0')}`;
-        
-        if (endTimeHour <= endHour) {
-          slots?.push({
-            id: `${date}-${startTime}`,
-            date,
-            startTime,
-            endTime,
-            duration,
-            booked: false
-          });
-        }
-      }
+  // Check validation status when component mounts or betaProgramId changes
+  useEffect(() => {
+    const campaignId = data?.betaProgramId || data?.savedCampaignId;
+    if (campaignId) {
+      checkCampaignInvites(campaignId);
     }
+    console.log('checkCampaignInvites campaignId: ', campaignId);
+  }, [data?.betaProgramId, data?.savedCampaignId]);
+  
+
+  // // Check if campaign invites were sent
+  // const checkCampaignInvites = async () => {
+  //   const campaignId = data?.betaProgramId || data?.savedCampaignId;
+  //   if (!campaignId) return;
+
+  //   try {
+  //     const validation = await schedulingEmailService?.validateCampaignInvites(campaignId);
+  //     setValidationStatus(validation);
+      
+  //     if (validation?.valid && validation?.invitedUsers) {
+  //       setRecipients(validation?.invitedUsers);
+  //     }
+  //   } catch (error) {
+  //     setValidationStatus({
+  //       valid: false,
+  //       message: 'Failed to validate campaign invites',
+  //       invitedUsers: []
+  //     });
+  //   }
+  // };
+
+  // Generate time slots for a day
+  const generateTimeSlots = (date, duration = 30, start = '09:00', end = '17:00') => {
+    const slots = [];
+    const [startHour, startMinute] = start.split(':').map(Number);
+    const [endHour, endMinute] = end.split(':').map(Number);
+  
+    let currentHour = startHour;
+    let currentMinute = startMinute;
+  
+    while (
+      currentHour < endHour ||
+      (currentHour === endHour && currentMinute < endMinute)
+    ) {
+      const startTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+      const totalMinutes = currentHour * 60 + currentMinute + duration;
+      const endTimeHour = Math.floor(totalMinutes / 60);
+      const endTimeMinute = totalMinutes % 60;
+      const endTime = `${String(endTimeHour).padStart(2, '0')}:${String(endTimeMinute).padStart(2, '0')}`;
+  
+      if (
+        endTimeHour < endHour ||
+        (endTimeHour === endHour && endTimeMinute <= endMinute)
+      ) {
+        slots.push({
+          id: `${date}-${startTime}`,
+          date,
+          startTime,
+          endTime,
+          duration,
+          booked: false
+        });
+      }
+  
+      currentHour = endTimeHour;
+      currentMinute = endTimeMinute;
+    }
+  
     return slots;
   };
+  
 
   // Get dates for the next 30 days
   const getAvailableDates = () => {
@@ -74,19 +196,24 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
   // Add multiple time slots for a date
   const handleAddDaySlots = () => {
     if (!selectedDate) return;
-    
-    const newSlots = generateTimeSlots(selectedDate, slotDuration);
+  
+    const newSlots = generateTimeSlots(selectedDate, slotDuration, workStart, workEnd);
     const updatedSlots = [...selectedSlots];
-    
-    newSlots?.forEach(slot => {
-      if (!updatedSlots?.some(existing => existing?.id === slot?.id)) {
-        updatedSlots?.push(slot);
+  
+    newSlots.forEach(slot => {
+      if (!updatedSlots.some(existing => existing.id === slot.id)) {
+        updatedSlots.push(slot);
       }
     });
-    
+  
     setSelectedSlots(updatedSlots);
     updateData({ availableSlots: updatedSlots });
+
+    // Reset email generation when slots change
+    setEmailGenerated(false);
+    setEmailContent(null);
   };
+  
 
   // Add a single custom slot
   const handleAddCustomSlot = () => {
@@ -106,6 +233,10 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
       const updatedSlots = [...selectedSlots, newSlot];
       setSelectedSlots(updatedSlots);
       updateData({ availableSlots: updatedSlots });
+
+      // Reset email generation when slots change
+      setEmailGenerated(false);
+      setEmailContent(null);
     }
   };
 
@@ -123,7 +254,88 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
     const updatedSlots = selectedSlots?.filter(slot => slot?.id !== slotId);
     setSelectedSlots(updatedSlots);
     updateData({ availableSlots: updatedSlots });
+
+    // Reset email generation when slots change
+    setEmailGenerated(false);
+    setEmailContent(null);
   };
+
+// Generate scheduling email content
+const handleGenerateEmail = async () => {
+  if (!validationStatus?.valid) {
+    alert(validationStatus?.message || 'Please set up the campaign first');
+    return;
+  }
+
+  if (!selectedSlots?.length) {
+    alert('Please add time slots first');
+    return;
+  }
+
+  setGenerateLoading(true);
+  
+  try {
+    const result = await schedulingEmailService?.generateSchedulingEmailContent({
+      betaProgramId: data?.betaProgramId || data?.savedCampaignId,
+      campaignName: data?.name || 'Beta Testing Campaign',
+      availableSlots: selectedSlots,
+      customInstructions,
+      emailOption
+    });
+
+    if (result?.success) {
+      setEmailContent(result?.emailContent);
+      setRecipients(result?.recipients || []);
+      setEmailGenerated(true);
+      setShowEmailPreview(true);
+    } else {
+      alert(result?.error || 'Failed to generate email content');
+    }
+  } catch (error) {
+    console.error('Error generating email:', error);
+    alert('Failed to generate email content. Please try again.');
+  } finally {
+    setGenerateLoading(false);
+  }
+};
+
+// Handle send scheduling emails
+const handleSendSchedulingEmails = async () => {
+  if (!emailContent || !recipients?.length) {
+    alert('Please generate email content first');
+    return;
+  }
+
+  try {
+    const result = await schedulingEmailService?.sendSchedulingEmails({
+      betaProgramId: data?.betaProgramId || data?.savedCampaignId,
+      emailContent,
+      recipients
+    });
+
+    if (result?.success) {
+      // Update campaign data with scheduling progress
+      updateData({
+        schedulingEmailsSent: result?.sentCount,
+        schedulingRecipients: recipients,
+        lastSchedulingEmail: new Date()?.toISOString()
+      });
+      
+      alert(result?.message);
+      
+      // Call the parent's onSendNow to update progress
+      if (onSendNow) {
+        onSendNow();
+      }
+    } else {
+      alert(result?.error || 'Failed to send scheduling emails');
+    }
+  } catch (error) {
+    console.error('Error sending emails:', error);
+    alert('Failed to send scheduling emails. Please try again.');
+  }
+};
+
 
   // Group slots by date
   const slotsByDate = selectedSlots?.reduce((acc, slot) => {
@@ -146,6 +358,59 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
 
   return (
     <div className="space-y-8">
+     
+      {/* Validation Status */}
+      {campaigns.length > 0 && (
+        <div className="p-4 border rounded-lg bg-muted/20">
+          <h3 className="font-semibold mb-2">Select a Campaign</h3>
+          <select
+            className="w-full border rounded p-2"
+            value={selectedCampaignId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setSelectedCampaignId(id);
+              if (id) {
+                onCampaignSelect?.(id);       // loads campaignData + sets betaProgramId
+                checkCampaignInvites(id);     // runs validation immediately
+              } else {
+                setValidationStatus(null);
+                setRecipients([]);
+              }
+            }}
+          >
+            <option value="">-- Choose a campaign --</option>
+            {campaigns.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Validation Status */}
+      {validationStatus && (
+        <div className={`p-4 rounded-lg border ${
+          validationStatus.valid
+            ? 'bg-success/10 border-success/20 text-success-foreground'
+            : 'bg-warning/10 border-warning/20 text-warning-foreground'
+        }`}>
+          <div className="flex items-center space-x-2">
+            <AppIcon
+              name={validationStatus.valid ? "CheckCircle" : "AlertTriangle"}
+              size={16}
+              className={validationStatus.valid ? "text-success" : "text-warning"}
+            />
+            <span className="text-sm font-medium">{validationStatus.message}</span>
+          </div>
+          {validationStatus.valid && recipients.length > 0 && (
+            <div className="mt-2 text-xs">
+              Ready to send to {recipients.length} beta testers who received campaign invites.
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Slot Configuration */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Slot Settings */}
@@ -154,6 +419,22 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
             <h3 className="text-lg font-medium text-foreground mb-4">Slot Configuration</h3>
             
             <div className="space-y-4">
+              {/* User defined working hours */}
+            <Input
+              label="Work Start Time"
+              type="time"
+              value={workStart}
+              onChange={(e) => setWorkStart(e.target.value)}
+            />
+
+            <Input
+              label="Work End Time"
+              type="time"
+              value={workEnd}
+              onChange={(e) => setWorkEnd(e.target.value)}
+            />
+
+
               {/* Duration Setting */}
               <Select
                 label="Slot Duration"
@@ -168,7 +449,7 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
               />
 
               {/* Date Selection */}
-              <Select
+              {/* <Select
                 label="Select Date"
                 value={selectedDate}
                 onChange={setSelectedDate}
@@ -176,6 +457,20 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
                   { value: '', label: 'Choose a date' },
                   ...availableDates
                 ]}
+              /> */}
+              {/* <Input
+                label="Select Date"
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]} // today
+              /> */}
+              <DatePicker
+                selected={selectedDate ? new Date(selectedDate) : null}
+                onChange={(date) => setSelectedDate(date.toISOString().split('T')[0])}
+                minDate={new Date()}
+                dateFormat="yyyy-MM-dd"
+                placeholderText="Select a date"
               />
 
               {/* Time Selection for Custom Slot */}
@@ -215,6 +510,72 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
               Add Custom Slot
             </Button>
           </div>
+
+{/* Email Generation Section */}
+{validationStatus?.valid && totalSlots > 0 && (
+            <div className="bg-muted/30 rounded-lg p-4">
+              <h4 className="font-medium text-foreground mb-3">Scheduling Email</h4>
+              
+              <div className="space-y-3">
+                <Select
+                  label="Email Type"
+                  value={emailOption}
+                  onChange={setEmailOption}
+                  options={[
+                    { value: 'ai', label: 'AI Generated (Recommended)' },
+                    { value: 'template', label: 'Professional Template' }
+                  ]}
+                />
+                
+                {emailOption === 'ai' && (
+                  <Input
+                    label="Custom Instructions (Optional)"
+                    placeholder="e.g., Make it more casual, emphasize urgency..."
+                    value={customInstructions}
+                    onChange={(e) => setCustomInstructions(e?.target?.value)}
+                  />
+                )}
+                
+                <Button
+                  onClick={handleGenerateEmail}
+                  disabled={generateLoading || !totalSlots}
+                  className="w-full bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                  iconName={generateLoading ? "Loader2" : "Sparkles"}
+                  iconPosition="left"
+                  iconSize={14}
+                >
+                  {generateLoading ? 'Generating...' : 'Generate Email with AI'}
+                </Button>
+                
+                {emailGenerated && (
+                  <div className="space-y-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowEmailPreview(!showEmailPreview)}
+                      className="w-full text-xs"
+                      iconName="Eye"
+                      iconPosition="left"
+                      iconSize={12}
+                    >
+                      {showEmailPreview ? 'Hide Preview' : 'Show Email Preview'}
+                    </Button>
+                    
+                    <Button
+                      onClick={handleSendSchedulingEmails}
+                      disabled={loading || !emailContent}
+                      className="w-full bg-warning/10 text-warning border-warning/20 hover:bg-warning/20"
+                      iconName="Send"
+                      iconPosition="left"
+                      iconSize={14}
+                    >
+                      Send to {recipients?.length} Recipients
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Slot Statistics */}
           <div className="bg-muted/30 rounded-lg p-4">
@@ -358,6 +719,58 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
           )}
         </div>
       </div>
+
+      {/* Email Preview Modal */}
+      {showEmailPreview && emailContent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-lg font-medium text-foreground">Email Preview</h3>
+              <button
+                onClick={() => setShowEmailPreview(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <AppIcon name="X" size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <div className="mb-4">
+                <div className="text-sm text-muted-foreground">Subject:</div>
+                <div className="font-medium text-foreground">{emailContent?.subject}</div>
+              </div>
+              
+              <div className="mb-4">
+                <div className="text-sm text-muted-foreground">Recipients: {recipients?.length} beta testers</div>
+              </div>
+              
+              <div className="border border-border rounded-lg p-4 bg-background">
+                <div dangerouslySetInnerHTML={{ __html: emailContent?.content }} />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border-t border-border">
+              <Button
+                variant="ghost"
+                onClick={() => setShowEmailPreview(false)}
+              >
+                Close
+              </Button>
+              
+              <Button
+                onClick={handleSendSchedulingEmails}
+                disabled={loading}
+                className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20"
+                iconName="Send"
+                iconPosition="left"
+                iconSize={14}
+              >
+                Send to {recipients?.length} Recipients
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Enhanced Schedule Summary with Actions */}
       <div className="bg-muted/30 rounded-lg p-6">
@@ -370,19 +783,37 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
                 {data?.availableSlots?.length || 0} slots configured
               </span>
             </div>
+
+            {validationStatus?.valid && totalSlots > 0 && !emailGenerated && (
+              <Button
+                variant="outline"
+                size="sm" 
+                onClick={handleGenerateEmail}
+                disabled={generateLoading}
+                className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                iconName="Sparkles"
+                iconPosition="left"
+                iconSize={14}
+              >
+                Generate Email with AI
+              </Button>
+            )}
+
             
-            <Button
-              variant="outline"
-              size="sm" 
-              onClick={onSendNow}
-              disabled={loading || !data?.availableSlots?.length}
-              className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20"
-              iconName="Send"
-              iconPosition="left"
-              iconSize={14}
-            >
-              Send Scheduling Email Now
-            </Button>
+            {emailGenerated && (
+              <Button
+                variant="outline"
+                size="sm" 
+                onClick={handleSendSchedulingEmails}
+                disabled={loading || !emailContent}
+                className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20"
+                iconName="Send"
+                iconPosition="left"
+                iconSize={14}
+              >
+                Send Scheduling Email Now
+              </Button>
+            )}
           </div>
         </div>
         
@@ -394,38 +825,42 @@ const ScheduleSlotStep = ({ data, updateData, onSendNow, campaignState, loading 
             </p>
           </div>
           <div>
-            <span className="text-muted-foreground">Slot Duration:</span>
+          <span className="text-muted-foreground">Recipients Ready:</span>
             <p className="font-medium text-foreground">
-              {data?.slotDuration || 30}m blocks
+              {/* {data?.slotDuration || 30}m blocks */}
+              {recipients?.length || 0}
             </p>
           </div>
           <div>
-            <span className="text-muted-foreground">Slots Filled:</span>
+            {/* <span className="text-muted-foreground">Slots Filled:</span> */}
+            <span className="text-muted-foreground">Emails Sent:</span>
             <p className="font-medium text-foreground">
-              {data?.slotsFilled || 0}
+              {/* {data?.slotsFilled || 0} */}
+              {data?.schedulingEmailsSent || 0}
             </p>
           </div>
           <div>
-            <span className="text-muted-foreground">Remaining:</span>
+          <span className="text-muted-foreground">Email Status:</span>
             <p className="font-medium text-foreground">
-              {(data?.availableSlots?.length || 0) - (data?.slotsFilled || 0)}
+              {/* {(data?.availableSlots?.length || 0) - (data?.slotsFilled || 0)} */}
+              {emailGenerated ? 'Ready' : 'Not Generated'}
             </p>
           </div>
         </div>
 
-        {/* Progress Status for Slots */}
-        {(data?.slotsFilled > 0 || data?.slotsRemaining > 0) && (
+        {/* Progress Status for Scheduling */}
+        {(data?.schedulingEmailsSent > 0) && (
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Progress Status:</span>
+            <span className="text-muted-foreground">Scheduling Progress:</span>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-success rounded-full"></div>
-                  <span className="text-foreground">Slots Filled: {data?.slotsFilled || 0}</span>
+                  <span className="text-foreground">Emails Sent: {data?.schedulingEmailsSent || 0}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-warning rounded-full"></div>
-                  <span className="text-foreground">Remaining: {data?.slotsRemaining || data?.availableSlots?.length || 0}</span>
+                  <span className="text-foreground">Pending Bookings: {(recipients?.length || 0) - (data?.schedulingEmailsSent || 0)}</span>
                 </div>
               </div>
             </div>

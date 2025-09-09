@@ -2,6 +2,8 @@
   "imports": {
     "std/": "https://deno.land/std@0.168.0/",
     "dotenv": "https://deno.land/std@0.168.0/dotenv/mod.ts",
-    "serve": "https://deno.land/std@0.168.0/http/server.ts"
+    "serve": "https://deno.land/std@0.168.0/http/server.ts",
+    "openai": "npm:openai@^4.0.0",
+    "resend": "npm:resend@^4.0.0"
   }
 }
