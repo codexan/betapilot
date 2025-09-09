@@ -111,6 +111,8 @@ class AIEmailService {
       companyName = 'BetaPilot',
       recipientCount,
       customInstructions = '',
+      betaProgramId,
+      baseUrl,
       accessToken // ✅ passed from SchedulingEmailService
     } = params;
   
@@ -135,7 +137,9 @@ class AIEmailService {
             availableSlots,
             companyName,
             recipientCount,
-            customInstructions
+            customInstructions,
+            betaProgramId,
+            baseUrl
           }),
         }
       );

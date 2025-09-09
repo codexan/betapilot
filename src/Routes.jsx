@@ -14,6 +14,7 @@ import WorkflowBuilder from './pages/workflow-builder';
 import CalendarIntegrationHub from './pages/calendar-integration-hub';
 import CampaignCreationWizard from './pages/campaign-creation-wizard/index';
 import GoogleOAuthCallback from "./components/oauth/GoogleOAuthCallback";
+import BetaSlotBooking from './pages/beta-slot-booking';
 
 const Routes = () => {
   return (
@@ -35,6 +36,9 @@ const Routes = () => {
           <Route path="/calendar-integration-hub" element={<ProtectedRoute><CalendarIntegrationHub /></ProtectedRoute>} />
           <Route path="/campaign/create" element={<ProtectedRoute><CampaignCreationWizard /></ProtectedRoute>} />
           <Route path="/campaign-creation-wizard" element={<ProtectedRoute><CampaignCreationWizard /></ProtectedRoute>} />
+
+          {/* Public Beta Slot Booking Route */}
+          <Route path="/beta-slot-booking" element={<ProtectedRoute><BetaSlotBooking /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>

@@ -285,7 +285,7 @@ BEGIN
             existing_beta_program_id,
             existing_user_id,
             'sent'::public.invitation_status,
-            'Welcome to BetaPilot v2.0 Beta Program',
+            'Welcome to PilotBeta v2.0 Beta Program',
             'Hi there, we are excited to invite you to join our beta program. Please review and sign the NDA to proceed.',
             CURRENT_TIMESTAMP - INTERVAL '2 hours',
             CURRENT_TIMESTAMP + INTERVAL '28 days'
@@ -302,8 +302,8 @@ BEGIN
         ) VALUES (
             invitation_id,
             existing_customer_id,
-            'BetaPilot Beta Program Non-Disclosure Agreement',
-            'This Non-Disclosure Agreement governs the disclosure of confidential information between BetaPilot and the beta tester.',
+            'PilotBeta Beta Program Non-Disclosure Agreement',
+            'This Non-Disclosure Agreement governs the disclosure of confidential information between PilotBeta and the beta tester.',
             'pending'::public.nda_status,
             CURRENT_TIMESTAMP + INTERVAL '30 days'
         ) RETURNING id INTO nda_id;

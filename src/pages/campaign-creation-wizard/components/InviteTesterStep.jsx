@@ -41,13 +41,13 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
       id: 'welcome',
       name: 'Welcome to Beta Program',
       subject: 'You\'re invited to join our beta program!',
-      content: 'Hi {{first_name}},\n\nWe\'re excited to invite you to participate in our beta program for {{campaign_name}}. Your feedback will be invaluable in helping us improve our product.\n\nBest regards,\nThe Beta Team'
+      content: 'Hi {{first_name}},\n\nWe\'re excited to invite you to participate in our beta program for {{campaign_name}}. Your feedback will be invaluable in helping us improve our product.\n\nBest regards,\n'
     },
     {
       id: 'exclusive',
       name: 'Exclusive Beta Access',
       subject: 'Exclusive beta access - {{campaign_name}}',
-      content: 'Hello {{first_name}},\n\nYou\'ve been selected for exclusive early access to {{campaign_name}}. This is a limited opportunity to experience our latest features before anyone else.\n\nThank you,\nProduct Team'
+      content: 'Hello {{first_name}},\n\nYou\'ve been selected for exclusive early access to {{campaign_name}}. This is a limited opportunity to experience our latest features before anyone else.\n\nThank you,\n'
     }
   ];
 

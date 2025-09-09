@@ -56,7 +56,7 @@ export function EmailPreview({ subject, content, customerName, programName }) {
         {/* Email Footer */}
         <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
           <div className="text-xs text-gray-500 text-center">
-            <p>BetaPilot Inc. | support@betapilot.com</p>
+            <p>PilotBeta Inc. | support@pilotbeta.com</p>
             <p>You received this invitation because you were selected for our beta program.</p>
           </div>
         </div>
@@ -66,12 +66,12 @@ export function EmailPreview({ subject, content, customerName, programName }) {
       <div className="mt-4 bg-gray-50 rounded-lg p-4">
         <h3 className="text-sm font-medium text-gray-900 mb-2">Available Variables</h3>
         <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-          <div>{{customer_name}} - Full name</div>
-          <div>{{program_name}} - Beta program name</div>
-          <div>{{customer.first_name}} - First name only</div>
-          <div>{{customer.last_name}} - Last name only</div>
-          <div>{{customer.email}} - Email address</div>
-          <div>{{company_name}} - Your company name</div>
+          <div>{`{{customer_name}}`} - Full name</div>
+          <div>{`{{program_name}}`} - Beta program name</div>
+          <div>{`{{customer.first_name}}`} - First name only</div>
+          <div>{`{{customer.last_name}}`} - Last name only</div>
+          <div>{`{{customer.email}}`} - Email address</div>
+          <div>{`{{company_name}}`} - Your company name</div>
         </div>
       </div>
     </div>

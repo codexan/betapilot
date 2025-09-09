@@ -39,8 +39,8 @@ CREATE TABLE public.resend_config (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
     api_key_encrypted TEXT, -- Encrypted API key
-    sender_name TEXT DEFAULT 'BetaPilot Team',
-    sender_email TEXT DEFAULT 'notifications@betapilot.com',
+    sender_name TEXT DEFAULT 'PilotBeta Team',
+    sender_email TEXT DEFAULT 'notifications@pilotbeta.com',
     is_verified BOOLEAN DEFAULT false,
     domain_verified BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -208,8 +208,8 @@ BEGIN
         )
         VALUES (
             existing_user_id,
-            'PM Name (BetaPilot)',
-            'notifications@betapilot.com',
+            'PM Name (PilotBeta)',
+            'notifications@pilotbeta.com',
             true,
             true
         );
@@ -243,8 +243,8 @@ BEGIN
             VALUES (
                 existing_program_id,
                 existing_customer_id,
-                'Join our exclusive beta program - BetaPilot',
-                'Hi there, we would love to have you participate in our beta program. Your feedback will be invaluable in helping us improve our product. Best regards, The BetaPilot Team',
+                'Join our exclusive beta program - PilotBeta',
+                'Hi there, we would love to have you participate in our beta program. Your feedback will be invaluable in helping us improve our product. Best regards, The PilotBeta Team',
                 'resend'::public.email_provider,
                 CURRENT_TIMESTAMP + INTERVAL '30 days',
                 existing_user_id
@@ -264,7 +264,7 @@ BEGIN
                     existing_invitation_id,
                     existing_user_id,
                     c.email,
-                    'Join our exclusive beta program - BetaPilot',
+                    'Join our exclusive beta program - PilotBeta',
                     'sent'
                 FROM public.customers c 
                 WHERE c.id = existing_customer_id;

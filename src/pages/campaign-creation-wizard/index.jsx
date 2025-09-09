@@ -378,6 +378,29 @@ const CampaignCreationWizard = () => {
       throw new Error(emailResult?.error || 'Failed to generate scheduling email');
     }
 
+    //send scheduling emails
+    // if (emailResult.success && emailResult.recipients?.length) {
+    //   await resendEmailService.sendBatchInvitations(
+    //     emailResult.recipients.map(r => ({
+    //       email: r.customers.email,
+    //       firstName: r.customers.first_name,
+    //       lastName: r.customers.last_name
+    //     })),
+    //     {
+    //       campaignName: campaignData?.name,
+    //       emailSubject: emailResult.emailContent.subject,
+    //       emailContent: emailResult.emailContent.content,
+    //       senderName: 'Melvi from PilotBeta'
+    //     },
+    //     {
+    //       senderEmail: 'melvi@melvimiranda.com',
+    //       senderName: 'Scheduler from PilotBeta'
+    //     }
+    //   );
+    // }
+    
+
+
     const sendResult = await schedulingEmailService?.sendSchedulingEmails({
       betaProgramId: savedCampaignId || campaignData?.betaProgramId,
       emailContent: emailResult?.emailContent,

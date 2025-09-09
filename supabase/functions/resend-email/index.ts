@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
           }
         });
 
-        const emailContent = personalizedContent + "\n\n— The BetaPilot Team";
+        const emailContent = personalizedContent;
 
         const resendResponse = await fetch("https://api.resend.com/emails", {
           method: "POST",

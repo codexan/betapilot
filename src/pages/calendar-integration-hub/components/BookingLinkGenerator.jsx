@@ -23,7 +23,7 @@ const BookingLinkGenerator = ({ calendarSlots = [], calendarIntegrations = [] })
 
   // Mock beta programs - in real app, this would come from props or service
   const betaPrograms = [
-    { id: '1', name: 'BetaPilot v2.0 Beta Program' },
+    { id: '1', name: 'PilotBeta v2.0 Beta Program' },
     { id: '2', name: 'Mobile App Beta' },
     { id: '3', name: 'Website Redesign Beta' }
   ];
@@ -301,7 +301,7 @@ const BookingLinkGenerator = ({ calendarSlots = [], calendarIntegrations = [] })
 
                 {customization?.includeCompanyInfo && (
                   <div className="mt-4 pt-4 border-t text-xs text-gray-400">
-                    <p>Powered by BetaPilot</p>
+                    <p>Powered by PilotBeta</p>
                   </div>
                 )}
               </div>

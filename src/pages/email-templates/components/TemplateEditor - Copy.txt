@@ -35,10 +35,10 @@ const TemplateEditor = ({ template, onSave, onSendTest, onDuplicate }) => {
           { name: 'Email', description: 'Customer email address', category: 'user_info', example_value: 'john.doe@example.com' },
           { name: 'CompanyName', description: 'Customer company name', category: 'user_info', example_value: 'TechCorp Inc.' },
           { name: 'BetaName', description: 'Beta testing campaign name', category: 'campaign', example_value: 'Mobile App Beta v2.1' },
-          { name: 'SlotLink', description: 'Beta testing slot booking link', category: 'campaign', example_value: 'https://pilotbeta.com/book-slot/abc123' },
+          { name: 'SlotLink', description: 'Beta testing slot booking link', category: 'campaign', example_value: 'https://betapilot.com/book-slot/abc123' },
           { name: 'ExpiryDate', description: 'Beta testing expiry date', category: 'campaign', example_value: '2024-09-15' },
-          { name: 'FeedbackLink', description: 'Feedback submission link', category: 'campaign', example_value: 'https://pilotbeta.com/feedback/xyz789' },
-          { name: 'SupportEmail', description: 'Support contact email', category: 'system', example_value: 'support@pilotbeta.com' }
+          { name: 'FeedbackLink', description: 'Feedback submission link', category: 'campaign', example_value: 'https://betapilot.com/feedback/xyz789' },
+          { name: 'SupportEmail', description: 'Support contact email', category: 'system', example_value: 'support@betapilot.com' }
         ];
 
         const finalVariables = loadedVariables?.length > 0 ? loadedVariables : defaultVariables;
@@ -52,10 +52,10 @@ const TemplateEditor = ({ template, onSave, onSendTest, onDuplicate }) => {
           { name: 'Email', description: 'Customer email address', category: 'user_info', example_value: 'john.doe@example.com' },
           { name: 'CompanyName', description: 'Customer company name', category: 'user_info', example_value: 'TechCorp Inc.' },
           { name: 'BetaName', description: 'Beta testing campaign name', category: 'campaign', example_value: 'Mobile App Beta v2.1' },
-          { name: 'SlotLink', description: 'Beta testing slot booking link', category: 'campaign', example_value: 'https://pilotbeta.com/book-slot/abc123' },
+          { name: 'SlotLink', description: 'Beta testing slot booking link', category: 'campaign', example_value: 'https://betapilot.com/book-slot/abc123' },
           { name: 'ExpiryDate', description: 'Beta testing expiry date', category: 'campaign', example_value: '2024-09-15' },
-          { name: 'FeedbackLink', description: 'Feedback submission link', category: 'campaign', example_value: 'https://pilotbeta.com/feedback/xyz789' },
-          { name: 'SupportEmail', description: 'Support contact email', category: 'system', example_value: 'support@pilotbeta.com' }
+          { name: 'FeedbackLink', description: 'Feedback submission link', category: 'campaign', example_value: 'https://betapilot.com/feedback/xyz789' },
+          { name: 'SupportEmail', description: 'Support contact email', category: 'system', example_value: 'support@betapilot.com' }
         ];
         setVariables(fallbackVariables);
         setFilteredVariables(fallbackVariables);
@@ -221,11 +221,11 @@ const TemplateEditor = ({ template, onSave, onSendTest, onDuplicate }) => {
       ?.replace(/{{FirstName}}/g, 'John')
       ?.replace(/{{LastName}}/g, 'Doe')
       ?.replace(/{{BetaName}}/g, 'Mobile App Beta v2.1')
-      ?.replace(/{{SlotLink}}/g, '<a href="https://pilotbeta.com/book-slot/abc123">Book Your Testing Slot</a>')
+      ?.replace(/{{SlotLink}}/g, '<a href="https://betapilot.com/book-slot/abc123">Book Your Testing Slot</a>')
       ?.replace(/{{CompanyName}}/g, 'TechCorp Inc.')
       ?.replace(/{{ExpiryDate}}/g, '2024-09-15')
-      ?.replace(/{{FeedbackLink}}/g, '<a href="https://pilotbeta.com/feedback/xyz789">Submit Your Feedback</a>')
-      ?.replace(/{{SupportEmail}}/g, 'support@pilotbeta.com');
+      ?.replace(/{{FeedbackLink}}/g, '<a href="https://betapilot.com/feedback/xyz789">Submit Your Feedback</a>')
+      ?.replace(/{{SupportEmail}}/g, 'support@betapilot.com');
   };
 
   return (
