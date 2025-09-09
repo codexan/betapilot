@@ -63,7 +63,7 @@ const Login = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
             <p className="text-sm text-muted-foreground">
-              © {new Date()?.getFullYear()} BetaPilot. All rights reserved.
+              © {new Date()?.getFullYear()} PilotBeta. All rights reserved.
             </p>
             <div className="flex items-center space-x-6">
               <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">

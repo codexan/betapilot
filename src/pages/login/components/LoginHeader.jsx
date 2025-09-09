@@ -11,7 +11,7 @@ const LoginHeader = () => {
             <Icon name="Zap" size={24} color="white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-foreground">BetaPilot</h1>
+            <h1 className="text-xl font-semibold text-foreground">PilotBeta</h1>
             <p className="text-xs text-muted-foreground">Beta Testing Management</p>
           </div>
         </Link>

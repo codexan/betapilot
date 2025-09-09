@@ -108,7 +108,7 @@ class AIEmailService {
     const {
       campaignName,
       availableSlots,
-      companyName = 'BetaPilot',
+      companyName = 'PilotBeta',
       recipientCount,
       customInstructions = '',
       betaProgramId,
