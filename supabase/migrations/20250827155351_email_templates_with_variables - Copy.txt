@@ -159,11 +159,11 @@ BEGIN
         ('FirstName', 'Customer first name', 'John', 'user_info'),
         ('LastName', 'Customer last name', 'Doe', 'user_info'),
         ('BetaName', 'Beta testing campaign name', 'Mobile App Beta v2.1', 'campaign'),
-        ('SlotLink', 'Beta testing slot booking link', 'https://pilotbeta.com/book-slot/abc123', 'campaign'),
+        ('SlotLink', 'Beta testing slot booking link', 'https://betapilot.com/book-slot/abc123', 'campaign'),
         ('CompanyName', 'Customer company name', 'TechCorp Inc.', 'user_info'),
         ('ExpiryDate', 'Beta testing expiry date', '2024-09-15', 'campaign'),
-        ('FeedbackLink', 'Feedback submission link', 'https://pilotbeta.com/feedback/xyz789', 'campaign'),
-        ('SupportEmail', 'Support contact email', 'support@pilotbeta.com', 'system');
+        ('FeedbackLink', 'Feedback submission link', 'https://betapilot.com/feedback/xyz789', 'campaign'),
+        ('SupportEmail', 'Support contact email', 'support@betapilot.com', 'system');
 
     -- Insert email templates with mock data
     INSERT INTO public.email_templates (id, name, subject, content, category, variables, created_by, usage_count) VALUES

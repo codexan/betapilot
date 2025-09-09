@@ -283,12 +283,12 @@ BEGIN
         phone_change_token, phone_change_sent_at
     ) VALUES
         (admin_uuid, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-         'admin@betapilot.com', crypt('admin123', gen_salt('bf', 10)), now(), now(), now(),
-         '{"full_name": "BetaPilot Admin", "role": "admin"}'::jsonb, '{"provider": "email", "providers": ["email"]}'::jsonb,
+         'admin@pilotbeta.com', crypt('admin123', gen_salt('bf', 10)), now(), now(), now(),
+         '{"full_name": "PilotBeta Admin", "role": "admin"}'::jsonb, '{"provider": "email", "providers": ["email"]}'::jsonb,
          false, false, '', null, '', null, '', '', null, '', 0, '', null, null, '', '', null),
         (manager_uuid, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-         'manager@betapilot.com', crypt('manager123', gen_salt('bf', 10)), now(), now(), now(),
-         '{"full_name": "Beta Manager", "role": "manager"}'::jsonb, '{"provider": "email", "providers": ["email"]}'::jsonb,
+         'manager@pilotbeta.com', crypt('manager123', gen_salt('bf', 10)), now(), now(), now(),
+         '{"full_name": "PilotBeta Manager", "role": "manager"}'::jsonb, '{"provider": "email", "providers": ["email"]}'::jsonb,
          false, false, '', null, '', null, '', '', null, '', 0, '', null, null, '', '', null);
 
     -- Create organizations
@@ -304,7 +304,7 @@ BEGIN
 
     -- Create beta program
     INSERT INTO public.beta_programs (id, name, description, start_date, end_date, created_by) VALUES
-        (beta_program_id, 'BetaPilot v2.0 Beta Program', 'Testing new workflow automation features', '2024-08-01', '2024-12-31', admin_uuid);
+        (beta_program_id, 'PilotBeta v2.0 Beta Program', 'Testing new workflow automation features', '2024-08-01', '2024-12-31', admin_uuid);
 
     -- Create customers
     INSERT INTO public.customers (id, first_name, last_name, email, organization_id, job_title, region, time_zone, language, participation_status, device_info, os_info, browser_info, last_activity, created_by) VALUES

@@ -108,7 +108,7 @@ const AuthCard = () => {
           </div>
           <h2 className="text-2xl font-semibold text-foreground mb-2">Welcome!</h2>
           <p className="text-muted-foreground">
-            Sign in to your BetaPilot account to manage your beta testing campaigns
+            Sign in to your PilotBeta account to manage your beta testing campaigns
           </p>
         </div>
 
@@ -198,7 +198,7 @@ const AuthCard = () => {
               disabled={loadingProvider !== null}
             >
               <Icon name="Play" size={16} className="mr-2" />
-              Demo Login (admin@betapilot.com)
+              Demo Login (admin@pilotbeta.com)
             </Button>
           </>
         ) : (

@@ -44,7 +44,7 @@ const SlotForm = ({
       // This would typically come from a beta programs service
       // For now, we'll use mock data
       setBetaPrograms([
-        { id: '1', name: 'BetaPilot v2.0 Beta Program' },
+        { id: '1', name: 'PilotBeta v2.0 Beta Program' },
         { id: '2', name: 'Mobile App Beta' },
         { id: '3', name: 'Website Redesign Beta' }
       ]);

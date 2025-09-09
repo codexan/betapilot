@@ -213,7 +213,7 @@ class GoogleOAuthService {
     const headers = [
       `To: ${Array.isArray(to) ? to?.join(', ') : to}`,
       `Subject: ${subject}`,
-      `From: ${from || 'BetaPilot Campaign'}`,
+      `From: ${from || 'PilotBeta Campaign'}`,
       `MIME-Version: 1.0`,
       `Content-Type: multipart/alternative; boundary="${boundary}"`
     ];

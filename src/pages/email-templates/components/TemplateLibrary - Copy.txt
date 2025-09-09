@@ -5,8 +5,6 @@ import Select from '../../../components/ui/Select';
 import Icon from '../../../components/AppIcon';
 
 const TemplateLibrary = ({ templates, selectedTemplate, onSelectTemplate, onCreateNew }) => {
-  console.log('TemplateLibrary props:', { templates, selectedTemplate, onSelectTemplate, onCreateNew });
-
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
 

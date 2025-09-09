@@ -233,7 +233,7 @@ class SchedulingEmailService {
   //         emailContent = await aiEmailService?.generateSchedulingEmail({
   //           campaignName,
   //           availableSlots: slots,
-  //           companyName: 'BetaPilot',
+  //           companyName: 'pilotbeta',
   //           recipientCount: validation?.invitedUsers?.length,
   //           customInstructions
   //         });
@@ -251,7 +251,7 @@ class SchedulingEmailService {
   //         emailContent = await aiEmailService?.generateSchedulingEmail({
   //           campaignName,
   //           availableSlots: slots,
-  //           companyName: 'BetaPilot',
+  //           companyName: 'pilotbeta',
   //           recipientCount: validation?.invitedUsers?.length,
   //           customInstructions
   //         });
@@ -312,9 +312,11 @@ class SchedulingEmailService {
           emailContent = await aiEmailService.generateSchedulingEmail({
             campaignName,
             availableSlots: slots,
-            companyName: 'BetaPilot',
+            companyName: 'pilotbeta',
             recipientCount: validation?.invitedUsers?.length,
             customInstructions,
+            betaProgramId,
+            baseUrl: window?.location?.origin || 'https://pilotbeta.com',
             accessToken // ✅ pass token to AI service
           });
           break;
@@ -404,7 +406,7 @@ class SchedulingEmailService {
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://calendly.com/betapilot/testing-session" 
+            <a href="https://calendly.com/pilotbeta/testing-session" 
                style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;">
               Book Your Testing Session Now
             </a>
@@ -426,7 +428,7 @@ class SchedulingEmailService {
           </ul>
           
           <p style="font-size: 16px; line-height: 1.6; color: #374151;">
-            Have questions? Reply to this email or contact us at support@betapilot.com.
+            Have questions? Reply to this email or contact us at support@pilotbeta.com.
           </p>
           
           <p style="font-size: 16px; line-height: 1.6; color: #374151;">
@@ -436,7 +438,7 @@ class SchedulingEmailService {
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
             <p style="color: #6b7280; font-size: 14px; margin: 0;">
               Best regards,<br>
-              The BetaPilot Team
+              The PilotBeta Team
             </p>
           </div>
         </div>
@@ -474,17 +476,48 @@ class SchedulingEmailService {
         throw new Error('Email content is incomplete. Please generate content first.');
       }
 
-      // Create scheduling email records
-      const emailRecords = recipients?.map(recipient => ({
+      if (!testMode && !accessToken) {
+        throw new Error('Missing access token for protected email dispatch');
+      }
+
+       // Prepare DB records
+      // const emailRecords = recipients.map(r => ({
+      //   beta_program_id: betaProgramId,
+      //   recipient_email: r.email,
+      //   recipient_name: r.name,
+      //   email_subject: emailContent.subject,
+      //   email_content: emailContent.content,
+      //   email_type: 'scheduling',
+      //   status: testMode ? 'draft' : 'pending',
+      //   scheduled_at: new Date().toISOString()
+      // }));
+
+      const emailRecords = recipients.map(r => ({
         beta_program_id: betaProgramId,
-        recipient_email: recipient?.email,
-        recipient_name: recipient?.name,
-        email_subject: emailContent?.subject,
-        email_content: emailContent?.content,
+        recipient_email: r.email || r.customers?.email || null,
+        recipient_name:
+          r.name ||
+          [r.customers?.first_name, r.customers?.last_name]
+            .filter(Boolean)
+            .join(' ') || null,
+        email_subject: emailContent.subject,
+        email_content: emailContent.content,
         email_type: 'scheduling',
         status: testMode ? 'draft' : 'pending',
-        scheduled_at: new Date()?.toISOString()
+        scheduled_at: new Date().toISOString()
       }));
+      
+      
+    console.log("Prepared scheduling email records:", emailRecords);
+
+    //validate emails before ijnsert to db
+    const missingEmails = emailRecords.filter(e => !e.recipient_email);
+    if (missingEmails.length) {
+      console.error('Recipients missing email:', missingEmails);
+      throw new Error('One or more recipients are missing email addresses');
+    }
+
+
 
       // Insert email records
       const { data: scheduledEmails, error: insertError } = await supabase?.from('scheduled_emails')?.insert(emailRecords)?.select('*');
@@ -493,88 +526,84 @@ class SchedulingEmailService {
         throw insertError;
       }
 
-      // In a real implementation, you would integrate with your email service here
-      // For now, we'll update the status to 'sent'
-      // if (!testMode) {
-      //   const emailIds = scheduledEmails?.map(email => email?.id);
-        
-      //   const { error: updateError } = await supabase?.from('scheduled_emails')?.update({ 
-      //       status: 'sent', 
-      //       sent_at: new Date()?.toISOString() 
-      //     })?.in('id', emailIds);
-
-      //   if (updateError) {
-      //     console.error('Error updating email status:', updateError);
-      //   }
-      // }
+      // If test mode, stop here
+    if (testMode) {
+      return {
+        success: true,
+        message: `${recipients.length} scheduling emails prepared (test mode)`,
+        sentCount: 0,
+        recipients,
+        scheduledEmails
+      };
+    }
 
       if (!accessToken && !testMode) {
         throw new Error('Missing access token for protected email dispatch');
       }
 
-      //Sending via Resend for Now:
-      if (!testMode) {
-        for (const email of scheduledEmails) {
-          try {
-            const sendResult = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-scheduling-email`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}` // if protected
-              },
-              body: JSON.stringify({
-                to: email.recipient_email,
-                subject: email.email_subject,
-                html: email.email_content
-              })
-            });
-            
-            
-      
-            if (!sendResult.ok) {
-              const errorText = await sendResult.text();
-              console.error(`Resend function failed for ${email.recipient_email}:`, errorText);
-            
-              await supabase
-                .from('scheduled_emails')
-                .update({ status: 'failed' })
-                .eq('id', email.id);
-            } else {
-              await supabase
-                .from('scheduled_emails')
-                .update({ 
-                  status: 'sent', 
-                  sent_at: new Date().toISOString() 
-                })
-                .eq('id', email.id);
-            }
-            
-          } catch (err) {
-            console.error(`Error sending email to ${email.recipient_email}:`, err);
-            await supabase
-              .from('scheduled_emails')
-              .update({ status: 'error' })
-              .eq('id', email.id);
+      // Send each email
+      console.log("Sending scheduling emails:", scheduledEmails);
+    for (const email of scheduledEmails) {
+      try {
+        const sendResult = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-scheduling-email`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+              to: email.recipient_email,
+              subject: email.email_subject,
+              html: email.email_content,
+              text: email.email_content.replace(/<[^>]+>/g, '') // plain text fallback
+            })
           }
-        }
-      }
-      
+        );
 
-      return {
-        success: true,
-        message: testMode 
-          ? `${recipients?.length} scheduling emails prepared (test mode)`
-          : `${recipients?.length} scheduling emails sent successfully`,
-        sentCount: recipients?.length,
-        recipients,
-        scheduledEmails
-      };
-    } catch (error) {
-      console.error('Error sending scheduling emails:', error);
-      return {
-        success: false,
-        error: error?.message || 'Failed to send scheduling emails'
-      };
+        if (!sendResult.ok) {
+          const errorText = await sendResult.text();
+          console.error(`Send failed for ${email.recipient_email}:`, sendResult.status, errorText);
+
+          await supabase
+            .from('scheduled_emails')
+            .update({ status: 'failed' })
+            .eq('id', email.id);
+
+        } else {
+          await supabase
+            .from('scheduled_emails')
+            .update({
+              status: 'sent',
+              sent_at: new Date().toISOString()
+            })
+            .eq('id', email.id);
+        }
+
+      } catch (err) {
+        console.error(`Error sending email to ${email.recipient_email}:`, err);
+        await supabase
+          .from('scheduled_emails')
+          .update({ status: 'error' })
+          .eq('id', email.id);
+      }
+    }
+
+    return {
+      success: true,
+      message: `${recipients.length} scheduling emails sent successfully`,
+      sentCount: recipients.length,
+      recipients,
+      scheduledEmails
+    };
+
+  } catch (error) {
+    console.error('Error sending scheduling emails:', error);
+    return {
+      success: false,
+      error: error?.message || 'Failed to send scheduling emails'
+    };
     }
   }
 
