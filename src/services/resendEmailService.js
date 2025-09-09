@@ -41,16 +41,16 @@ class ResendEmailService {
         const configResult = await this.getUserConfig(session?.user?.id);
         if (configResult?.success && configResult?.data) {
           userConfiguration = {
-            senderEmail: configResult?.data?.sender_email || userConfig?.senderEmail || 'PM Name (BetaPilot) <notifications@melvimiranda.com>',
-            senderName: configResult?.data?.sender_name || userConfig?.senderName || 'PM Name (BetaPilot)'
+            senderEmail: configResult?.data?.sender_email || userConfig?.senderEmail || 'PM Name (PilotBeta) <notifications@melvimiranda.com>',
+            senderName: configResult?.data?.sender_name || userConfig?.senderName || 'PM Name (PilotBeta)'
           };
         }
       } catch (configError) {
         console.warn('Failed to get user config, using defaults:', configError?.message);
         // Continue with provided userConfig or defaults
         userConfiguration = {
-          senderEmail: userConfig?.senderEmail || 'PM Name (BetaPilot) <notifications@melvimiranda.com>',
-          senderName: userConfig?.senderName || 'PM Name (BetaPilot)'
+          senderEmail: userConfig?.senderEmail || 'PM Name (PilotBeta) <notifications@melvimiranda.com>',
+          senderName: userConfig?.senderName || 'PM Name (PilotBeta)'
         };
       }
 
@@ -66,7 +66,7 @@ class ResendEmailService {
           campaignName: campaignData?.campaignName || 'Beta Program',
           emailSubject: campaignData?.emailSubject,
           emailContent: campaignData?.emailContent,
-          senderName: campaignData?.senderName || userConfiguration?.senderName || 'PM Name (BetaPilot)'
+          senderName: campaignData?.senderName || userConfiguration?.senderName || 'PM Name (PilotBeta)'
         },
         userConfig: userConfiguration
       };
@@ -296,7 +296,7 @@ console.log('Response headers:', [...response.headers.entries()]);
   
       const payload = {
         user_id: userId,
-        sender_name: config?.senderName ?? 'PM Name (BetaPilot)',
+        sender_name: config?.senderName ?? 'PM Name (PilotBeta)',
         sender_email: config?.senderEmail ?? 'notifications@melvimiranda.com',
         is_verified: config?.isVerified ?? false,
         domain_verified: config?.domainVerified ?? false,

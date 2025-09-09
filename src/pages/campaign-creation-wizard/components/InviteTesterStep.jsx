@@ -324,13 +324,13 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
         campaignId: data?.betaProgramId,
         emailSubject: data?.emailSubject,
         emailContent: data?.emailContent,
-        senderName: resendConfig?.sender_name || 'PM Name (BetaPilot)'
+        senderName: resendConfig?.sender_name || 'PM Name (PilotBeta)'
       };
 
       // User configuration
       const userConfig = {
-        senderEmail: resendConfig?.sender_email || 'PM Name (BetaPilot) <notifications@betapilot.com>',
-        senderName: resendConfig?.sender_name || 'PM Name (BetaPilot)'
+        senderEmail: resendConfig?.sender_email || 'PM Name (PilotBeta) <notifications@PilotBeta.com>',
+        senderName: resendConfig?.sender_name || 'PM Name (PilotBeta)'
       };
 
       // Send batch invitations via Resend
@@ -590,7 +590,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
                       <span className="text-sm font-medium text-foreground">Resend Email Service</span>
                     </div>
                     <p className="text-xs text-muted-foreground mb-2">
-                      Send from: {resendConfig?.sender_email || 'notifications@betapilot.com'}
+                      Send from: {resendConfig?.sender_email || 'notifications@PilotBeta.com'}
                     </p>
                     <div className="flex items-center space-x-2">
                       <Button

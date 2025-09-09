@@ -59,7 +59,7 @@ const Header = () => {
             <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
               <Icon name="Zap" size={20} color="white" />
             </div>
-            <span className="text-xl font-semibold text-foreground">BetaPilot</span>
+            <span className="text-xl font-semibold text-foreground">PilotBeta</span>
           </Link>
 
           {/* Desktop Navigation */}

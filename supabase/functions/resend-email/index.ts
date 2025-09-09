@@ -56,7 +56,7 @@ Deno.serve(async (req: Request) => {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            from: `${userConfig?.senderName ?? "PilotBeta"} <${userConfig?.senderEmail ?? "betapilot@melvimiranda.com"}>`,
+            from: `${userConfig?.senderName ?? "PilotBeta"} <${userConfig?.senderEmail ?? "PilotBeta@melvimiranda.com"}>`,
             to: [invitation.email],
             subject: personalizedSubject,
             html: emailContent.replace(/\n/g, "<br>"),
