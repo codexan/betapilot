@@ -432,6 +432,30 @@ const handleSendSchedulingEmails = async () => {
     
     const accessToken = session?.access_token;
 
+    // First, create calendar slots in the database
+    console.log('Creating calendar slots before sending emails...');
+    const slotsToCreate = selectedSlots.map(slot => ({
+      beta_program_id: data?.betaProgramId || data?.savedCampaignId,
+      slot_date: slot.date,
+      start_time: slot.startTime,
+      end_time: slot.endTime,
+      description: slot.description || 'Beta Testing Session',
+      meeting_link: slot.meetingLink || null,
+      capacity: slot.capacity || 1,
+      status: 'available'
+    }));
+
+    const slotCreationResult = await campaignCreationService?.createCalendarSlots({
+      slots: slotsToCreate
+    });
+
+    console.log('Slot creation result:', slotCreationResult);
+
+    if (!slotCreationResult?.success) {
+      alert(`Failed to create calendar slots: ${slotCreationResult?.error}`);
+      return;
+    }
+
     const result = await schedulingEmailService?.sendSchedulingEmails({
       betaProgramId: data?.betaProgramId || data?.savedCampaignId,
       emailContent,
@@ -439,8 +463,6 @@ const handleSendSchedulingEmails = async () => {
       accessToken // ✅ now included  
     });
     
-    
-
     console.log('Email sending result:', result);
 
     if (result?.success) {

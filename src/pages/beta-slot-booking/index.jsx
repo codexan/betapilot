@@ -104,6 +104,7 @@ const BetaSlotBooking = () => {
 
         setBetaProgram(programData);
         setSelectedBetaProgram(programData);
+        console.log('Loaded beta program:', programData);
         await loadAvailableSlots(betaProgramId);
       } 
       // Load all available beta programs for public access
@@ -186,8 +187,89 @@ const BetaSlotBooking = () => {
     }
   };
 
+  const createDemoSlots = async (programId) => {
+    try {
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      
+      const dayAfter = new Date(today);
+      dayAfter.setDate(today.getDate() + 2);
+      
+      const demoSlots = [
+        {
+          beta_program_id: programId,
+          slot_date: tomorrow.toISOString().split('T')[0],
+          start_time: '10:00',
+          end_time: '11:00',
+          description: 'Beta Testing Session',
+          meeting_link: 'https://meet.google.com/demo-link',
+          capacity: 1,
+          status: 'available'
+        },
+        {
+          beta_program_id: programId,
+          slot_date: tomorrow.toISOString().split('T')[0],
+          start_time: '14:00',
+          end_time: '15:00',
+          description: 'Beta Testing Session',
+          meeting_link: 'https://meet.google.com/demo-link',
+          capacity: 1,
+          status: 'available'
+        },
+        {
+          beta_program_id: programId,
+          slot_date: dayAfter.toISOString().split('T')[0],
+          start_time: '09:00',
+          end_time: '10:00',
+          description: 'Beta Testing Session',
+          meeting_link: 'https://meet.google.com/demo-link',
+          capacity: 1,
+          status: 'available'
+        }
+      ];
+      
+      const { data, error } = await supabase
+        .from('calendar_slots')
+        .insert(demoSlots)
+        .select();
+        
+      if (error) {
+        console.error('Error creating demo slots:', error);
+      } else {
+        console.log('Demo slots created successfully:', data);
+      }
+    } catch (err) {
+      console.error('Error in createDemoSlots:', err);
+    }
+  };
+
   const loadAvailableSlots = async (programId) => {
     try {
+      console.log('Loading slots for program ID:', programId);
+      
+      // First check ALL slots for this program (no status filter)
+      const { data: allSlots } = await supabase
+        .from('calendar_slots')
+        .select('id, status, slot_date')
+        .eq('beta_program_id', programId);
+      
+      console.log('ALL slots for this program (any status):', allSlots);
+      
+      // If no slots exist, create some demo slots for this program
+      // COMMENTED OUT: RLS policy prevents slot creation
+      // if (!allSlots || allSlots.length === 0) {
+      //   console.log('No slots found, creating demo slots...');
+      //   await createDemoSlots(programId);
+      //   
+      //   // Reload slots after creation
+      //   const { data: newAllSlots } = await supabase
+      //     .from('calendar_slots')
+      //     .select('id, status, slot_date')
+      //     .eq('beta_program_id', programId);
+      //   console.log('Demo slots created:', newAllSlots);
+      // }
+      
       const { data: slotsData, error: slotsError } = await supabase
         ?.from('calendar_slots')
         ?.select(`
@@ -205,6 +287,9 @@ const BetaSlotBooking = () => {
         ?.order('slot_date')
         ?.order('start_time');
 
+      console.log('Raw slots data:', slotsData);
+      console.log('Slots error:', slotsError);
+
       if (slotsError) {
         throw slotsError;
       }
@@ -214,6 +299,7 @@ const BetaSlotBooking = () => {
         (slot?.calendar_bookings?.length || 0) < (slot?.capacity || 1)
       ) || [];
 
+      console.log('Available slots after filtering:', availableSlots);
       setAvailableSlots(availableSlots);
     } catch (err) {
       setError(`Failed to load available time slots: ${err?.message || 'Unknown error'}`);
