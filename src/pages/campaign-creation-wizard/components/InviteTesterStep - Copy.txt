@@ -10,10 +10,6 @@ import GoogleOAuthButton from '../../../components/oauth/GoogleOAuthButton';
 import { googleOAuthService } from '../../../services/googleOAuthService';
 import { resendEmailService } from '../../../services/resendEmailService';
 import { useAuth } from '../../../contexts/AuthContext';
-import { supabase } from '../../../lib/supabase';
-
-
-
 
 const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading }) => {
   const [customers, setCustomers] = useState([]);
@@ -269,55 +265,6 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
         betaInvitationId: null // Will be created if needed
       }));
 
-      const { data: insertedCampaign, error: insertError } = await supabase
-      .from('beta_programs')
-      .insert([{
-        name: data?.name,
-        description: data?.description || '',
-        created_by: user?.id,
-        start_date: new Date().toISOString().split('T')[0],
-        is_active: true
-      }])
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error('Failed to insert campaign:', insertError);
-      updateData({ resendError: 'Failed to create campaign before sending emails' });
-      return;
-    }
-
-    // Update campaign ID for downstream use
-    updateData({ betaProgramId: insertedCampaign?.id });
-
-    // Prepare invitation payload
-      const invitationPayload = data?.selectedTesters?.map(tester => ({
-        beta_program_id: insertedCampaign?.id,
-        customer_id: tester?.id,
-        invited_by: user?.id,
-        status: 'sent',
-        sent_at: new Date().toISOString()
-      }));
-
-      // Insert invitations
-      const { data: insertedInvites, error: inviteError } = await supabase
-        .from('beta_invitations')
-        .insert(invitationPayload);
-
-      if (inviteError) {
-        console.error('Failed to insert invitations:', inviteError);
-        updateData({ resendError: 'Failed to create invitations after campaign insert' });
-        return;
-      }
-
-      // Optional: enrich invitations with Supabase IDs for Resend
-      const enrichedInvitations = data?.selectedTesters?.map((tester, index) => ({
-        email: tester?.email,
-        firstName: tester?.first_name,
-        lastName: tester?.last_name,
-        betaInvitationId: insertedInvites?.[index]?.id || null
-      }));
-
       // Campaign data for email content
       const campaignData = {
         campaignName: data?.name,
@@ -334,7 +281,7 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
       };
 
       // Send batch invitations via Resend
-      const result = await resendEmailService?.sendBatchInvitations(enrichedInvitations, campaignData, userConfig);
+      const result = await resendEmailService?.sendBatchInvitations(invitations, campaignData, userConfig);
       // ✅ Log full response for debugging
       console.log('Resend full response:', result);
 

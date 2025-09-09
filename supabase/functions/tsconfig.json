@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["deno.window"],
+    "lib": ["es2022", "dom"],
     "module": "esnext",
     "moduleResolution": "node",
     "allowJs": true,
