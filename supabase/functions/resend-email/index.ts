@@ -39,10 +39,19 @@ Deno.serve(async (req: Request) => {
           }
         });
 
+        // Create booking link with invitation token if available
+        const baseUrl = campaignData.baseUrl || 'https://pilotbeta.com';
+        const bookingLink = invitation.betaInvitationId 
+          ? `${baseUrl}/beta-slot-booking?token=${invitation.betaInvitationId}`
+          : campaignData.campaignId 
+          ? `${baseUrl}/beta-slot-booking?campaign=${campaignData.campaignId}`
+          : `${baseUrl}/beta-slot-booking`;
+
         const personalizedContent = campaignData.emailContent.replace(/{{([^}]+)}}/g, (_: string, key: string) => {
           switch (key.trim()) {
             case "first_name": return invitation.firstName || "there";
             case "campaign_name": return campaignData.campaignName || "Beta Program";
+            case "BookingLink": return bookingLink;
             default: return _;
           }
         });

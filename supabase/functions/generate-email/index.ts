@@ -12,6 +12,15 @@ interface EmailGenerationRequest {
   customInstructions?: string;
   betaProgramId?: string;
   baseUrl?: string;
+  invitationToken?: string;
+  invitations?: Array<{
+    invitation_token: string;
+    customers: {
+      first_name: string;
+      last_name: string;
+      email: string;
+    };
+  }>;
 }
 
 // Deno.serve(async (req) => {
@@ -148,7 +157,7 @@ Deno.serve(async (req) => {
 
   if (req.method === "POST") {
     try {
-      const { campaignName, availableSlots, companyName, recipientCount, customInstructions, betaProgramId, baseUrl } = await req.json() as EmailGenerationRequest;
+      const { campaignName, availableSlots, companyName, recipientCount, customInstructions, betaProgramId, baseUrl, invitationToken, invitations } = await req.json() as EmailGenerationRequest;
       
       // Get user info from JWT token
       const authHeader = req.headers.get('Authorization');
@@ -171,10 +180,31 @@ Deno.serve(async (req) => {
         }
       }
       
-      // Create booking link
-      const bookingLink = betaProgramId && baseUrl 
-        ? `${baseUrl}/beta-slot-booking?campaign=${betaProgramId}`
-        : 'https://pilotbeta.com/beta-slot-booking';
+      // Create booking link - prioritize invitations array, then single token, then campaign fallback
+      let bookingLink = 'https://pilotbeta.com/beta-slot-booking';
+      
+      console.log('🔗 URL Construction Debug:');
+      console.log('  - baseUrl:', baseUrl);
+      console.log('  - invitations array length:', invitations?.length || 0);
+      console.log('  - first invitation token:', invitations?.[0]?.invitation_token);
+      console.log('  - single invitationToken:', invitationToken);
+      console.log('  - betaProgramId:', betaProgramId);
+      
+      if (invitations && invitations.length > 0 && baseUrl) {
+        // Use the first invitation token for the general template
+        bookingLink = `${baseUrl}/beta-slot-booking?token=${invitations[0].invitation_token}`;
+        console.log('  ✅ Using invitations array token');
+      } else if (invitationToken && baseUrl) {
+        bookingLink = `${baseUrl}/beta-slot-booking?token=${invitationToken}`;
+        console.log('  ✅ Using single invitation token');
+      } else if (betaProgramId && baseUrl) {
+        bookingLink = `${baseUrl}/beta-slot-booking?campaign=${betaProgramId}`;
+        console.log('  ⚠️ Falling back to campaign ID');
+      } else {
+        console.log('  ❌ Using default fallback URL');
+      }
+      
+      console.log('  📍 Final booking link:', bookingLink);
 
       // Create name tokens for email personalization
       const nameTokens = {

@@ -232,18 +232,26 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
 
   // Enhanced Resend email sending with better authentication handling
   const handleSendViaResend = async () => {
+    console.log('🚀 Starting handleSendViaResend function');
+    console.log('📊 Current resendConfig:', resendConfig);
+    console.log('👥 Selected testers:', data?.selectedTesters);
+    console.log('🔐 User ID:', user?.id);
+    console.log('🎫 Session:', !!session);
+    
     if (!data?.selectedTesters?.length) {
       console.error('No testers selected for invitation');
       return;
     }
 
-    if (!data?.emailSubject) {
-      console.error('Email subject is required');
+    if (!user?.id) {
+      console.error('User not authenticated');
+      updateData({
+        resendError: 'Authentication required - please sign in again'
+      });
       return;
     }
 
-    // Enhanced authentication check
-    if (!user?.id || !session) {
+    if (!session) {
       console.error('User authentication required for sending emails');
       updateData({
         testersPending: data?.selectedTesters?.length || 0,
@@ -254,10 +262,13 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
 
     // ✅ Validate Resend config early
     if (!resendConfig?.sender_email || !resendConfig?.sender_name) {
-      console.error('Missing sender configuration for Resend');
+      console.error('❌ Missing sender configuration for Resend:', resendConfig);
       updateData({ resendError: 'Missing sender configuration' });
       return;
     }
+    
+    console.log('✅ Resend config validated, proceeding with email send');
+    
     try {
       setSendingViaResend(true);
 
@@ -296,13 +307,15 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
         customer_id: tester?.id,
         invited_by: user?.id,
         status: 'sent',
-        sent_at: new Date().toISOString()
+        sent_at: new Date().toISOString(),
+        invitation_token: crypto.randomUUID() // Generate unique token for each invitation
       }));
 
-      // Insert invitations
+      // Insert invitations and return the created records with tokens
       const { data: insertedInvites, error: inviteError } = await supabase
         .from('beta_invitations')
-        .insert(invitationPayload);
+        .insert(invitationPayload)
+        .select('id, invitation_token');
 
       if (inviteError) {
         console.error('Failed to insert invitations:', inviteError);
@@ -310,21 +323,26 @@ const InviteTesterStep = ({ data, updateData, onSendNow, campaignState, loading 
         return;
       }
 
-      // Optional: enrich invitations with Supabase IDs for Resend
+      // Optional: enrich invitations with invitation tokens for Resend
       const enrichedInvitations = data?.selectedTesters?.map((tester, index) => ({
         email: tester?.email,
         firstName: tester?.first_name,
         lastName: tester?.last_name,
-        betaInvitationId: insertedInvites?.[index]?.id || null
+        betaInvitationId: insertedInvites?.[index]?.invitation_token || null
       }));
+
+      // Debug logging to check token values
+      console.log('Inserted invites:', insertedInvites);
+      console.log('Enriched invitations:', enrichedInvitations);
 
       // Campaign data for email content
       const campaignData = {
         campaignName: data?.name,
-        campaignId: data?.betaProgramId,
+        campaignId: insertedCampaign?.id,
         emailSubject: data?.emailSubject,
         emailContent: data?.emailContent,
-        senderName: resendConfig?.sender_name || 'PM Name (PilotBeta)'
+        senderName: resendConfig?.sender_name || 'PM Name (PilotBeta)',
+        baseUrl: window.location.origin
       };
 
       // User configuration

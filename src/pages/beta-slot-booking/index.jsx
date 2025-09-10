@@ -429,91 +429,89 @@ const BetaSlotBooking = () => {
       setSubmitting(true);
       setError(null);
 
-      // Create or get customer record
-      let customerId = invitation?.customer_id;
+      // We'll use invitation token as bearer token for the booking details fetch
 
-      if (!customerId) {
-        // Parse customer name
-        const nameParts = bookingData?.customerName?.trim()?.split(' ') || [''];
-        const firstName = nameParts?.[0] || '';
-        const lastName = nameParts?.slice(1)?.join(' ') || '';
+      // Parse customer name
+      const nameParts = bookingData?.customerName?.trim()?.split(' ') || [''];
+      const firstName = nameParts?.[0] || '';
+      const lastName = nameParts?.slice(1)?.join(' ') || '';
 
-        // Try upsert first
-        const { data: customerData, error: customerError } = await supabase
-          .from('customers')
-          .upsert({
-            first_name: firstName,
-            last_name: lastName,
-            email: bookingData?.customerEmail,
-            phone: bookingData?.customerPhone || null,
-            participation_status: 'invited',
-            time_zone: timezone
-          }, {
-            onConflict: ['email']
-          })
-          .select()
-          .single();
-
-        if (customerData?.id) {
-          customerId = customerData.id;
-        } else if (customerError?.code === '23505') {
-          // Customer exists, get their ID
-          const { data: existingCustomer, error: fetchError } = await supabase
-            .from('customers')
-            .select('id')
-            .eq('email', bookingData?.customerEmail)
-            .single();
-          
-          if (fetchError) {
-            throw new Error('Email already exists. Please use a different email or contact support.');
-          }
-          customerId = existingCustomer.id;
-        } else {
-          throw customerError || new Error('Unable to create or retrieve customer record.');
-        }
-      }
-
-      // Create booking record
-      const { data: bookingResult, error: bookingError } = await supabase
-        ?.from('calendar_bookings')
-        ?.insert({
-          calendar_slot_id: selectedSlot?.id,
-          customer_id: customerId,
-          beta_invitation_id: invitation?.id || null,
-          notes: bookingData?.notes || null,
-          confirmed_at: new Date()?.toISOString()
-        })
-        ?.select(`
-          *,
-          calendar_slots (
-            slot_date, start_time, end_time, description, meeting_link,
-            beta_programs (name)
-          ),
-          customers (first_name, last_name, email)
-        `)
-        ?.single();
+      // Call the RPC function
+      const { data: bookingId, error: bookingError } = await supabase
+        .rpc('book_slot_with_customer', {
+          p_slot_id: selectedSlot?.id,
+          p_first_name: firstName,
+          p_last_name: lastName,
+          p_email: bookingData?.customerEmail,
+          p_phone: bookingData?.customerPhone || null,
+          p_notes: bookingData?.notes || null,
+          p_beta_invitation_id: invitation?.id || null
+        });
 
       if (bookingError) {
         console.error('Booking creation error:', bookingError);
-        throw new Error(`Failed to create booking: ${bookingError.message}`);
+        if (bookingError.code === 'P0001') {
+          throw new Error('This time slot is no longer available. Please select another slot.');
+        } else if (bookingError.code === 'P0002') {
+          throw new Error('Invalid invitation. Please check your invitation link.');
+        } else {
+          throw new Error(`Failed to create booking: ${bookingError.message}`);
+        }
       }
 
+      // Fetch booking details using invitation token as bearer token
+      let bookingResult = null;
+      if (bookingId && invitationToken) {
+        try {
+          console.log('Fetching booking with invitation token:', invitationToken);
+          console.log('Booking ID:', bookingId);
+          
+          // Use direct fetch with invitation token in custom header
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/calendar_bookings?select=*,calendar_slots(slot_date,start_time,end_time,description,meeting_link,beta_programs(name)),customers(first_name,last_name,email)&id=eq.${bookingId}`,
+            {
+              headers: {
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                'invitation-token': invitationToken,
+                'Accept': 'application/vnd.pgrst.object+json'
+              }
+            }
+          );
+
+          if (response.ok) {
+            const fetchedBooking = await response.json();
+            console.log('Successfully fetched booking:', fetchedBooking);
+            bookingResult = fetchedBooking;
+          } else {
+            console.error('Failed to fetch booking details:', response.status, response.statusText);
+          }
+        } catch (fetchErr) {
+          console.error('Failed to fetch booking details:', fetchErr);
+        }
+      }
+
+      // Fallback to mock data if fetch fails or no invitation token
       if (!bookingResult) {
-        throw new Error('Booking was created but no data returned.');
+        bookingResult = {
+          id: bookingId,
+          calendar_slots: {
+            slot_date: selectedSlot?.slot_date,
+            start_time: selectedSlot?.start_time,
+            end_time: selectedSlot?.end_time,
+            description: selectedSlot?.description,
+            meeting_link: selectedSlot?.meeting_link,
+            beta_programs: { name: betaProgram?.name }
+          },
+          customers: {
+            first_name: firstName,
+            last_name: lastName,
+            email: bookingData?.customerEmail
+          }
+        };
       }
 
       console.log('confirmBooking_Booking Result:', bookingResult);
-      console.log('confirmBooking_Selected Slot ID:', selectedSlot?.id);
-      
-      // Update slot status to 'booked' for demo purposes
-      // This simulates the slot being taken even without actual booking record
-      const { data: updateResult, error: updateError } = await supabase
-        .from('calendar_slots')
-        .update({ status: 'booked' })
-        .eq('id', selectedSlot?.id);
-      
-      console.log('confirmBooking_Slot Update Result:', updateResult);
-      console.log('confirmBooking_Slot Update Error:', updateError);
+      console.log('confirmBooking_Booking ID:', bookingId);
 
       // NEW: If token is single-use, mark it used
       if (isPublicAccess && validatedTokenRow?.token) {

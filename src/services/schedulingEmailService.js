@@ -317,7 +317,8 @@ class SchedulingEmailService {
             customInstructions,
             betaProgramId,
             baseUrl: window?.location?.origin || 'https://pilotbeta.com',
-            accessToken // ✅ pass token to AI service
+            accessToken, // ✅ pass token to AI service
+            invitations: validation?.invitedUsers // ✅ pass invitations with tokens
           });
           break;
   

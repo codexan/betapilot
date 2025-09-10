@@ -4,6 +4,7 @@ export const betaSlotBookingService = {
   // Get invitation details by token
   async getInvitationByToken(token) {
     try {
+      console.log('Fetching invitation details for token:', token);
       const { data, error } = await supabase
         ?.from('beta_invitations')
         ?.select(`

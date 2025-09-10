@@ -20,12 +20,15 @@ declare namespace Deno {
 export interface Invitation {
   email: string;
   firstName?: string;
+  betaInvitationId?: string;
 }
 
 export interface CampaignData {
   campaignName: string;
   emailSubject: string;
   emailContent: string;
+  campaignId?: string;
+  baseUrl?: string;
 }
 
 export interface UserConfig {

@@ -113,14 +113,16 @@ class AIEmailService {
       customInstructions = '',
       betaProgramId,
       baseUrl,
-      accessToken // ✅ passed from SchedulingEmailService
+      accessToken, // ✅ passed from SchedulingEmailService
+      invitations // ✅ invitations with tokens
     } = params;
   
     console.log('Calling AI email service with:', {
       campaignName,
       availableSlots,
       recipientCount,
-      customInstructions
+      customInstructions,
+      invitations: invitations?.length
     });
   
     try {
@@ -139,7 +141,8 @@ class AIEmailService {
             recipientCount,
             customInstructions,
             betaProgramId,
-            baseUrl
+            baseUrl,
+            invitations // ✅ pass invitations to Edge Function
           }),
         }
       );
