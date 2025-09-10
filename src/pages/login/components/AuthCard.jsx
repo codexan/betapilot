@@ -198,7 +198,7 @@ const AuthCard = () => {
               disabled={loadingProvider !== null}
             >
               <Icon name="Play" size={16} className="mr-2" />
-              Demo Login (admin@pilotbeta.com)
+              Demo Login (Click for access!)
             </Button>
           </>
         ) : (
