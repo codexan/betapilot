@@ -4,8 +4,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { v4 as uuidv4 } from 'uuid';
 
-// Generate a UUID token for each booking link generation
-const generateAccessToken = () => uuidv4();
+const accessToken = uuidv4(); // or use a hash of email + program ID
 
 
 const BookingLinkGenerator = ({ calendarSlots = [], calendarIntegrations = [] }) => {
@@ -39,8 +38,6 @@ const BookingLinkGenerator = ({ calendarSlots = [], calendarIntegrations = [] })
       return;
     }
 
-    const accessToken = generateAccessToken();
-    
     const params = new URLSearchParams({
       branding: encodeURIComponent(customization.brandingColors.primary),
       timezone: customization.timeZone,
@@ -49,11 +46,8 @@ const BookingLinkGenerator = ({ calendarSlots = [], calendarIntegrations = [] })
       access_token: accessToken
     });
 
-    // Use production URL for emails, fallback to current origin for development testing
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://pilotbeta.com' 
-      : window.location?.origin;
-    const bookingUrl = `${baseUrl}/beta-slot-booking?program=${selectedProgram}&${params.toString()}`;
+    const baseUrl = 'https://pilotbeta.com'//window.location?.origin;
+    const bookingUrl = `${baseUrl}/booking/${selectedProgram}?${params?.toString()}`;
     
     setGeneratedLink(bookingUrl);
   };

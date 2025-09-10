@@ -8,13 +8,17 @@ import BookingForm from './components/BookingForm';
 import ConfirmationModal from './components/ConfirmationModal';
 import TimezoneSelector from './components/TimezoneSelector';
 
+
 const BetaSlotBooking = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
   // URL parameters
+  
   const invitationToken = searchParams?.get('token');
   const betaProgramId = searchParams?.get('program') || searchParams?.get('campaign');
+
+  const publicToken = searchParams?.get('access_token'); // NEW: public access token
   
   // State management
   const [loading, setLoading] = useState(true);
@@ -38,15 +42,89 @@ const BetaSlotBooking = () => {
   const [bookingResult, setBookingResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [isPublicAccess, setIsPublicAccess] = useState(false); // NEW: mark when link is public via token
+  const [validatedTokenRow, setValidatedTokenRow] = useState(null); // NEW: cache token row for later use
+
+
   // Load initial data
   useEffect(() => {
     loadBookingData();
-  }, [invitationToken, betaProgramId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invitationToken, betaProgramId, publicToken]); // CHANGED: include publicToken
 
   const loadBookingData = async () => {
     try {
       setLoading(true);
       setError(null);
+
+// NEW: Public token flow first (so it bypasses login for anonymous users)
+    if (publicToken) {
+      // 1) Validate token
+      const { data: tokenRow, error: tokenError } = await supabase
+        ?.from('public_access_tokens')
+        ?.select('token, beta_program_id, expires_at, used')
+        ?.eq('token', publicToken)
+        ?.single();
+
+      if (tokenError || !tokenRow) {
+        setError('This booking link is invalid.');
+        return;
+      }
+      if (tokenRow?.used) {
+        setError('This booking link has already been used.');
+        return;
+      }
+      if (tokenRow?.expires_at && new Date(tokenRow.expires_at) < new Date()) {
+        setError('This booking link has expired.');
+        return;
+      }
+
+      // 2) Set request header for RLS policies to pick up the token
+      // The RLS policies check current_setting('request.access_token', true)
+      try {
+        // Set the access token in Supabase client headers
+        supabase.rest.headers['x-access-token'] = publicToken;
+        
+        // Also set it as a custom setting for RLS
+        await supabase.rpc('set_config', {
+          setting_name: 'request.access_token',
+          new_value: publicToken,
+          is_local: true
+        });
+      } catch (e) {
+        console.warn('Failed to set access token for RLS policies:', e);
+      }
+
+      // 3) Resolve program (token-scoped program wins, else query-string program, else show selector)
+      let targetProgramId = tokenRow?.beta_program_id || betaProgramId || null;
+
+      if (!targetProgramId) {
+        // No program id available yet; continue to public directory (will show program selector)
+        await loadAllAvailableBetaPrograms();
+        setIsPublicAccess(true);
+        setValidatedTokenRow(tokenRow);
+        return;
+      }
+
+      // 4) Load program by ID
+      const { data: programData, error: programError } = await supabase
+        ?.from('beta_programs')
+        ?.select('*')
+        ?.eq('id', targetProgramId)
+        ?.single();
+
+      if (programError || !programData) {
+        setError('Beta program not found or no longer available.');
+        return;
+      }
+
+      setIsPublicAccess(true);
+      setValidatedTokenRow(tokenRow);
+      setBetaProgram(programData);
+      setSelectedBetaProgram(programData);
+      await loadAvailableSlots(targetProgramId);
+      return; // IMPORTANT: stop here; public flow handled
+    }  //end of token code for public url access
 
       // Load invitation data if token provided
       if (invitationToken) {
@@ -317,6 +395,18 @@ const BetaSlotBooking = () => {
     setError(null);
     
     if (program) {
+      // NEW: For public access, set request setting again (navigating between programs with a multi-use token)
+      if (isPublicAccess && publicToken) {
+        try {
+          await supabase.rpc('set_config', {
+            setting_name: 'request.access_token',
+            new_value: publicToken,
+            is_local: true
+          });
+        } catch (e) {
+          console.warn('Failed to set access token in change handler:', e);
+        }
+      }
       await loadAvailableSlots(program?.id);
     } else {
       setAvailableSlots([]);
@@ -383,50 +473,34 @@ const BetaSlotBooking = () => {
         }
       }
 
-      // // Create booking record
-      // const { data: bookingResult, error: bookingError } = await supabase
-      //   ?.from('calendar_bookings')
-      //   ?.insert({
-      //     calendar_slot_id: selectedSlot?.id,
-      //     customer_id: customerId,
-      //     beta_invitation_id: invitation?.id || null,
-      //     notes: bookingData?.notes || null,
-      //     confirmed_at: new Date()?.toISOString()
-      //   })
-      //   ?.select(`
-      //     *,
-      //     calendar_slots (
-      //       slot_date, start_time, end_time, description, meeting_link,
-      //       beta_programs (name)
-      //     ),
-      //     customers (first_name, last_name, email)
-      //   `)
-      //   ?.single();
-      // Get slot and customer details for display
-      const { data: slotDetails, error: slotError } = await supabase
-        .from('calendar_slots')
-        .select('slot_date, start_time, end_time, description, meeting_link, beta_programs(name)')
-        .eq('id', selectedSlot?.id)
-        .single();
+      // Create booking record
+      const { data: bookingResult, error: bookingError } = await supabase
+        ?.from('calendar_bookings')
+        ?.insert({
+          calendar_slot_id: selectedSlot?.id,
+          customer_id: customerId,
+          beta_invitation_id: invitation?.id || null,
+          notes: bookingData?.notes || null,
+          confirmed_at: new Date()?.toISOString()
+        })
+        ?.select(`
+          *,
+          calendar_slots (
+            slot_date, start_time, end_time, description, meeting_link,
+            beta_programs (name)
+          ),
+          customers (first_name, last_name, email)
+        `)
+        ?.single();
 
-      const { data: customerDetails, error: customerError } = await supabase
-        .from('customers')
-        .select('first_name, last_name, email')
-        .eq('id', customerId)
-        .single();
-
-      if (slotError || customerError) {
-        throw new Error('Failed to retrieve booking details.');
+      if (bookingError) {
+        console.error('Booking creation error:', bookingError);
+        throw new Error(`Failed to create booking: ${bookingError.message}`);
       }
 
-      // Create a mock bookingResult for the success screen
-      // TODO: Fix RLS policy to allow booking insertion
-      const bookingResult = {
-        id: Date.now(), // temporary ID
-        calendar_slots: slotDetails,
-        customers: customerDetails,
-        confirmed_at: new Date().toISOString()
-      };
+      if (!bookingResult) {
+        throw new Error('Booking was created but no data returned.');
+      }
 
       console.log('confirmBooking_Booking Result:', bookingResult);
       console.log('confirmBooking_Selected Slot ID:', selectedSlot?.id);
@@ -440,6 +514,18 @@ const BetaSlotBooking = () => {
       
       console.log('confirmBooking_Slot Update Result:', updateResult);
       console.log('confirmBooking_Slot Update Error:', updateError);
+
+      // NEW: If token is single-use, mark it used
+      if (isPublicAccess && validatedTokenRow?.token) {
+        try {
+          await supabase
+            .from('public_access_tokens')
+            .update({ used: true })
+            .eq('token', validatedTokenRow.token);
+        } catch (e) {
+          console.warn('Failed to mark public token as used. Consider multi-use tokens if intentional.');
+        }
+      }
 
       setBookingResult(bookingResult);
       setShowConfirmation(false);

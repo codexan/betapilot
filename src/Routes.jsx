@@ -38,7 +38,7 @@ const Routes = () => {
           <Route path="/campaign-creation-wizard" element={<ProtectedRoute><CampaignCreationWizard /></ProtectedRoute>} />
 
           {/* Public Beta Slot Booking Route */}
-          <Route path="/beta-slot-booking" element={<ProtectedRoute><BetaSlotBooking /></ProtectedRoute>} />
+          <Route path="/beta-slot-booking" element={<BetaSlotBooking />} />
           
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>
