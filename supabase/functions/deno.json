@@ -17,7 +17,8 @@
     "std/": "https://deno.land/std@0.168.0/",
     "dotenv": "https://deno.land/std@0.168.0/dotenv/mod.ts",
     "openai": "npm:openai@^4.0.0",
-    "resend": "npm:resend@^4.0.0"
+    "resend": "npm:resend@^4.0.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
   },
   "lint": {
     "rules": {
