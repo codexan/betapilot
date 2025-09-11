@@ -73,27 +73,34 @@ const AuthCard = () => {
   const onCredentialsSubmit = async (data) => {
     setError('');
     try {
+      console.log('Attempting email signin with:', { email: data?.email, hasPassword: !!data?.password });
       const { error } = await signIn(data?.email, data?.password, { rememberMe });
+      
       if (error) {
+        console.error('Signin error:', error);
         if (error?.includes('Invalid login credentials') || error?.includes('Invalid email or password')) {
           setError('Invalid email or password. Please check your credentials and try again.');
         } else if (error?.includes('Cannot connect to authentication service') || 
                    error?.includes('Failed to fetch')) {
           setError('Cannot connect to authentication service. Your Supabase project may be paused or inactive.');
+        } else if (error?.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before signing in.');
         } else {
-          setError('Login failed. Please try again.');
+          setError(`Login failed: ${error}`);
         }
       } else {
+        console.log('Signin successful, redirecting...');
         // Redirect to intended destination or dashboard
         const from = location.state?.from?.pathname || '/dashboard';
         navigate(from, { replace: true });
       }
     } catch (error) {
+      console.error('Signin catch error:', error);
       if (error?.message?.includes('Failed to fetch') || 
           error?.message?.includes('NetworkError')) {
         setError('Cannot connect to authentication service. Please check your connection.');
       } else {
-        setError('An unexpected error occurred during login.');
+        setError(`An unexpected error occurred during login: ${error?.message || error}`);
       }
     }
   };
@@ -140,16 +147,6 @@ const AuthCard = () => {
 
         {/* Auth Mode Toggle */}
         <div className="flex rounded-lg bg-muted p-1 mb-6">
-          
-          {/* <button
-            onClick={() => setAuthMode('credentials')}
-            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
-              authMode === 'credentials' ?'bg-background text-foreground shadow-sm' :'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Email Login
-          </button> */}
-
           <button
             onClick={() => setAuthMode('oauth')}
             className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
@@ -157,6 +154,14 @@ const AuthCard = () => {
             }`}
           >
             SSO Login
+          </button>
+          <button
+            onClick={() => setAuthMode('credentials')}
+            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+              authMode === 'credentials' ?'bg-background text-foreground shadow-sm' :'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Email Login
           </button>
         </div>
 
@@ -268,18 +273,16 @@ const AuthCard = () => {
             </Button>
 
             {/* Demo Credentials Helper */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start space-x-3">
                 <Icon name="Info" size={16} className="text-blue-600 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-medium text-blue-900 mb-1">Demo Credentials</h4>
                   <div className="bg-blue-100 rounded px-3 py-2 text-xs font-mono">
-                    {/* <div>Email: admin@pilotbeta.com</div>
-                    <div>Password: admin123</div> */}
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </form>
         )}
 
@@ -297,19 +300,46 @@ const AuthCard = () => {
           </div>
         </div>
 
+        {/* Sign Up Call to Action - New prominent placement */}
+        <div className="mt-4 text-center">
+          <p className="text-sm text-muted-foreground mb-3">
+            Don't have an account yet?
+          </p>
+          <Link to="/signup">
+            <Button 
+              variant="outline"
+              size="lg"
+              className="w-full border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40"
+            >
+              <Icon name="UserPlus" size={16} className="mr-2" />
+              Create New Account
+            </Button>
+          </Link>
+        </div>
+
         {/* Trust Indicators */}
         <TrustIndicators />
       </div>
 
       {/* Footer */}
       <div className="text-center mt-6">
-        <p className="text-xs text-muted-foreground">
-          By signing in, you agree to our Terms of Service and{' '}
+        <p className="text-xs text-muted-foreground mb-2">
+          By signing in, you agree to our Terms of Service and {' '}
           <Link 
             to="/privacy-policy" 
             className="text-blue-600 hover:text-blue-700 underline"
           >
             Privacy Policy
+          </Link>
+        </p>
+        {/* Updated signup link to direct signup page */}
+        <p className="text-sm text-muted-foreground">
+          Don't have an account?{' '}
+          <Link 
+            to="/signup" 
+            className="text-primary hover:underline font-medium"
+          >
+            Sign Up
           </Link>
         </p>
       </div>

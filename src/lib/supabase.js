@@ -11,7 +11,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'Accept': 'application/json' // ✅ Add this line
+      'Accept': 'application/json'
     }
   }
 });

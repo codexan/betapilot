@@ -16,6 +16,8 @@ import CampaignCreationWizard from './pages/campaign-creation-wizard/index';
 import GoogleOAuthCallback from "./components/oauth/GoogleOAuthCallback";
 import BetaSlotBooking from './pages/beta-slot-booking';
 import PrivacyPolicy from './pages/privacy-policy';
+import Signup from './pages/auth/Signup';
+
 const Routes = () => {
   return (
     <BrowserRouter>
@@ -25,6 +27,7 @@ const Routes = () => {
           {/* Public routes */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/oauth/google/callback" element={<GoogleOAuthCallback />} />
           
           {/* Protected routes */}
