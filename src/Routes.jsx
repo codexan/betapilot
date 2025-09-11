@@ -15,7 +15,7 @@ import CalendarIntegrationHub from './pages/calendar-integration-hub';
 import CampaignCreationWizard from './pages/campaign-creation-wizard/index';
 import GoogleOAuthCallback from "./components/oauth/GoogleOAuthCallback";
 import BetaSlotBooking from './pages/beta-slot-booking';
-
+import PrivacyPolicy from './pages/privacy-policy';
 const Routes = () => {
   return (
     <BrowserRouter>
@@ -39,6 +39,9 @@ const Routes = () => {
 
           {/* Public Beta Slot Booking Route */}
           <Route path="/beta-slot-booking" element={<BetaSlotBooking />} />
+
+          {/* Privacy Policy Route */}
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>

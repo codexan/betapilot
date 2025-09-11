@@ -11,7 +11,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
 
 
   const navigationItems = [
@@ -99,14 +99,23 @@ const Header = () => {
               {isUserMenuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-popover border border-border rounded-md shadow-elevated z-[1010]">
                   <div className="p-3 border-b border-border">
-                    <p className="text-sm font-medium text-foreground">John Doe</p>
-                    <p className="text-xs text-muted-foreground">john.doe@company.com</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{user?.email || 'No email'}</p>
                   </div>
                   <div className="py-1">
                     <button className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
                       <Icon name="Settings" size={16} className="mr-2" />
                       Settings
                     </button>
+                    <Link 
+                      to="/privacy-policy"
+                      className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                    >
+                      <Icon name="Shield" size={16} className="mr-2" />
+                      Privacy Policy
+                    </Link>
                     <button className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
                       <Icon name="HelpCircle" size={16} className="mr-2" />
                       Help

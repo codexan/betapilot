@@ -1,6 +1,7 @@
 import React from 'react';
 import LoginHeader from './components/LoginHeader';
 import AuthCard from './components/AuthCard';
+import Footer from '../../components/ui/Footer';
 
 const Login = () => {
   return (
@@ -59,26 +60,7 @@ const Login = () => {
         </div>
       </main>
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-6">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-            <p className="text-sm text-muted-foreground">
-              © {new Date()?.getFullYear()} PilotBeta. All rights reserved.
-            </p>
-            <div className="flex items-center space-x-6">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">
-                Terms of Service
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">
-                Support
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

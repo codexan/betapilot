@@ -7,7 +7,7 @@ import CalendarGrid from './components/CalendarGrid';
 import BookingForm from './components/BookingForm';
 import ConfirmationModal from './components/ConfirmationModal';
 import TimezoneSelector from './components/TimezoneSelector';
-
+import Footer from '../../components/ui/Footer';
 
 const BetaSlotBooking = () => {
   const [searchParams] = useSearchParams();
@@ -643,7 +643,7 @@ const BetaSlotBooking = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -688,6 +688,9 @@ const BetaSlotBooking = () => {
           </div>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="flex-1"> 
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
@@ -751,10 +754,14 @@ const BetaSlotBooking = () => {
           </div>
         </div>
       </div>
+    </div>
 
-      {/* Confirmation Modal */}
-      {showConfirmation && (
-        <ConfirmationModal
+    {/* Footer */}
+    <Footer variant="minimal" />
+    
+    {/* Confirmation Modal */}
+    {showConfirmation && (
+      <ConfirmationModal
           selectedSlot={selectedSlot}
           bookingData={bookingData}
           timezone={timezone}

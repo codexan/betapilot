@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
  import Icon from'../../components/AppIcon';
  import Button from'../../components/ui/Button';
  import Input from'../../components/ui/Input';
+ import Footer from '../../components/ui/Footer';
 
 export default function Signup() {
   const [email, setEmail] = useState('')
@@ -17,7 +18,7 @@ export default function Signup() {
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e?.preventDefault()
     
     try {
       setLoading(true)
@@ -29,8 +30,8 @@ export default function Signup() {
       })
       
       if (error) {
-        if (error.includes('Cannot connect to authentication service') || 
-            error.includes('Failed to fetch')) {
+        if (error?.includes('Cannot connect to authentication service') || 
+            error?.includes('Failed to fetch')) {
           setError('Cannot connect to authentication service. Your Supabase project may be paused or inactive. Please check your Supabase dashboard and resume your project if needed.');
         } else {
           setError(error);
@@ -51,101 +52,104 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-indigo-100">
-            <Icon name="UserPlus" size={24} className="text-indigo-600" />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-        </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <Icon name="AlertCircle" size={16} className="text-red-400 mt-0.5 mr-2" />
-                <div className="text-sm text-red-700">{error}</div>
-              </div>
-            </div>
-          )}
-          
-          {message && (
-            <div className="rounded-md bg-green-50 p-4">
-              <div className="flex">
-                <Icon name="CheckCircle" size={16} className="text-green-400 mt-0.5 mr-2" />
-                <div className="text-sm text-green-700">{message}</div>
-              </div>
-            </div>
-          )}
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <Input
-                id="fullName"
-                name="fullName"
-                type="text"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-              />
-            </div>
-          </div>
-
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
           <div>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? (
-                <div className="flex items-center">
-                  <Icon name="Loader2" size={16} className="animate-spin mr-2" />
-                  Creating account...
-                </div>
-              ) : (
-                'Sign up'
-              )}
-            </Button>
+            <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-indigo-100">
+              <Icon name="UserPlus" size={24} className="text-indigo-600" />
+            </div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Create your account
+            </h2>
           </div>
-        </form>
+          
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="rounded-md bg-red-50 p-4">
+                <div className="flex">
+                  <Icon name="AlertCircle" size={16} className="text-red-400 mt-0.5 mr-2" />
+                  <div className="text-sm text-red-700">{error}</div>
+                </div>
+              </div>
+            )}
+            
+            {message && (
+              <div className="rounded-md bg-green-50 p-4">
+                <div className="flex">
+                  <Icon name="CheckCircle" size={16} className="text-green-400 mt-0.5 mr-2" />
+                  <div className="text-sm text-green-700">{message}</div>
+                </div>
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+                  Full Name
+                </label>
+                <Input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e?.target?.value)}
+                  placeholder="Enter your full name"
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email address
+                </label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e?.target?.value)}
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e?.target?.value)}
+                  placeholder="Enter your password"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full"
+              >
+                {loading ? (
+                  <div className="flex items-center">
+                    <Icon name="Loader2" size={16} className="animate-spin mr-2" />
+                    Creating account...
+                  </div>
+                ) : (
+                  'Sign up'
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
+      <Footer variant="minimal" />
     </div>
-  )
+  );
 }

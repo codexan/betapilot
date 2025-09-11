@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 // Google OAuth configuration
 const GOOGLE_OAUTH_CONFIG = {
-  clientId: import.meta.env?.VITE_GOOGLE_OAUTH_CLIENT_ID,
+  clientId: null, // Will be fetched from Supabase Edge Function
   redirectUri: `${window?.location?.origin}/oauth/google/callback`,
   scope: [
     'https://www.googleapis.com/auth/gmail.send',
@@ -12,44 +12,77 @@ const GOOGLE_OAUTH_CONFIG = {
 };
 
 class GoogleOAuthService {
-  // Generate Google OAuth URL
-  generateAuthUrl() {
-    const params = new URLSearchParams({
-      client_id: GOOGLE_OAUTH_CONFIG?.clientId,
-      redirect_uri: GOOGLE_OAUTH_CONFIG?.redirectUri,
-      scope: GOOGLE_OAUTH_CONFIG?.scope,
-      response_type: 'code',
-      access_type: 'offline',
-      prompt: 'consent',
-      include_granted_scopes: 'true'
-    });
-
-    return `https://accounts.google.com/o/oauth2/v2/auth?${params?.toString()}`;
-  }
-
-  // Exchange authorization code for tokens
-  async exchangeCodeForTokens(code) {
+  // Get OAuth configuration from Supabase Edge Function
+  async getOAuthConfig() {
     try {
-      const response = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          client_id: GOOGLE_OAUTH_CONFIG?.clientId,
-          client_secret: import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_SECRET,
-          code: code,
-          grant_type: 'authorization_code',
-          redirect_uri: GOOGLE_OAUTH_CONFIG?.redirectUri
-        })
-      });
-
-      if (!response?.ok) {
-        throw new Error(`OAuth token exchange failed: ${response?.statusText}`);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('User not authenticated');
       }
 
-      const tokens = await response?.json();
-      return { success: true, tokens };
+      const response = await supabase.functions.invoke('oauth-config', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      return response.data;
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Generate Google OAuth URL
+  async generateAuthUrl() {
+    try {
+      const configResult = await this.getOAuthConfig();
+      if (!configResult.success) {
+        throw new Error(configResult.error);
+      }
+
+      const params = new URLSearchParams({
+        client_id: configResult.clientId,
+        redirect_uri: GOOGLE_OAUTH_CONFIG?.redirectUri,
+        scope: GOOGLE_OAUTH_CONFIG?.scope,
+        response_type: 'code',
+        access_type: 'offline',
+        prompt: 'consent',
+        include_granted_scopes: 'true'
+      });
+
+      return `https://accounts.google.com/o/oauth2/v2/auth?${params?.toString()}`;
+    } catch (error) {
+      throw new Error(`Failed to generate OAuth URL: ${error.message}`);
+    }
+  }
+
+  // Exchange authorization code for tokens using Supabase Edge Function
+  async exchangeCodeForTokens(code) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await supabase.functions.invoke('oauth-token-exchange', {
+        body: {
+          code: code,
+          redirectUri: GOOGLE_OAUTH_CONFIG?.redirectUri
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      return response.data;
     } catch (error) {
       return { success: false, error: error?.message };
     }

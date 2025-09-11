@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { storeProviderTokens, clearProviderTokens, getStoredProviderTokens } from '../utils/tokenStorage';
 
 const AuthContext = createContext({})
 
@@ -39,11 +40,18 @@ export const AuthProvider = ({ children }) => {
             sessionStorage?.setItem('supabase.auth.token', JSON.stringify(session))
             localStorage?.removeItem('supabase.auth.token')
           }
+          
+          // Store provider tokens if available (OAuth login)
+          if (session.provider_token || session.provider_refresh_token) {
+            storeProviderTokens(session)
+          }
         }
         
         if (event === 'SIGNED_OUT') {
           localStorage?.removeItem('rememberMe')
           sessionStorage?.removeItem('supabase.auth.token')
+          // Clear provider tokens on sign out
+          clearProviderTokens()
         }
       }
     )
@@ -125,10 +133,25 @@ export const AuthProvider = ({ children }) => {
 
   const signInWithOAuth = async (provider, options = {}) => {
     try {
+      const scopesArray = [
+        'openid',
+        'profile', 
+        'email',
+        'https://www.googleapis.com/auth/gmail.send',
+        'https://www.googleapis.com/auth/calendar.events'
+      ];
+      
+      console.log('OAuth scopes being requested:', scopesArray);
+      
       const { data, error } = await supabase?.auth?.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window?.location?.origin}/dashboard`,
+          scopes: scopesArray.join(' '),
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          },
           ...options
         }
       })
@@ -186,7 +209,8 @@ export const AuthProvider = ({ children }) => {
     signInWithDemo,
     signInWithOAuth,
     signOut,
-    resetPassword
+    resetPassword,
+    getStoredProviderTokens
   }
 
   return (

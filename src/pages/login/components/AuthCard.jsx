@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
 import { useForm } from 'react-hook-form';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 import SSOButton from './SSOButton';
 import TrustIndicators from './TrustIndicators';
 import Icon from '../../../components/AppIcon';
@@ -304,7 +304,13 @@ const AuthCard = () => {
       {/* Footer */}
       <div className="text-center mt-6">
         <p className="text-xs text-muted-foreground">
-          By signing in, you agree to our Terms of Service and Privacy Policy
+          By signing in, you agree to our Terms of Service and{' '}
+          <Link 
+            to="/privacy-policy" 
+            className="text-blue-600 hover:text-blue-700 underline"
+          >
+            Privacy Policy
+          </Link>
         </p>
       </div>
     </div>

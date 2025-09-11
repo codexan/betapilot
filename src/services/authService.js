@@ -66,6 +66,17 @@ export const signInWithOAuth = async (provider, options = {}) => {
       provider,
       options: {
         redirectTo: `${window?.location?.origin}/dashboard`,
+        scopes: [
+          'openid',
+          'profile', 
+          'email',
+          'https://www.googleapis.com/auth/gmail.send',
+          'https://www.googleapis.com/auth/calendar.events'
+        ].join(' '),
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        },
         ...options
       }
     })

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import MetricCard from './components/MetricCard';
@@ -9,12 +9,31 @@ import HeroSection from './components/HeroSection';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [metrics, setMetrics] = useState({
     totalTesters: { value: 1247, change: '+12%', changeType: 'positive' },
     activeInvitations: { value: 89, change: '+5%', changeType: 'positive' },
     ndasSigned: { value: 156, change: '+8%', changeType: 'positive' },
     pendingInvites: { value: 23, change: '-15%', changeType: 'negative' }
   });
+
+  // Check for OAuth errors and redirect to login if cancelled
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
+    
+    if (error === 'access_denied' || errorDescription === 'access_denied') {
+      // User cancelled OAuth, redirect to login
+      navigate('/login', { 
+        replace: true,
+        state: { 
+          message: 'Google authentication was cancelled. Please try again.',
+          type: 'info'
+        }
+      });
+      return;
+    }
+  }, [searchParams, navigate]);
 
   // Simulate real-time updates
   useEffect(() => {

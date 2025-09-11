@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import ProfileCard from './components/ProfileCard';
@@ -224,6 +224,7 @@ const CustomerProfile = () => {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between mb-6">
             <Breadcrumb items={breadcrumbItems} />
+            <div className="flex items-center space-x-3"> 
             <Button
               variant="outline"
               onClick={handleBackToDirectory}
@@ -232,6 +233,30 @@ const CustomerProfile = () => {
             >
               Back to Directory
             </Button>
+            <div className="relative">
+                <Button
+                  variant="outline"
+                  iconName="Settings"
+                >
+                  Settings
+                </Button>
+                <div className="hidden group-hover:block absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-md shadow-elevated z-10">
+                  <div className="py-1">
+                    <Link 
+                      to="/privacy-policy"
+                      className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                    >
+                      <Icon name="Shield" size={16} className="mr-2" />
+                      Privacy Policy
+                    </Link>
+                    <button className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
+                      <Icon name="HelpCircle" size={16} className="mr-2" />
+                      Help & Support
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
